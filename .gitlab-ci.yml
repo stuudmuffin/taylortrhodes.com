@@ -7,3 +7,7 @@ build_image:
     script:
         - docker build -t c_nginxphp .
         - docker run c_nginxphp
+    artifacts:
+        paths:
+        - public
+
