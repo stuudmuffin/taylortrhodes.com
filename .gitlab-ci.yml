@@ -14,6 +14,10 @@ Build Image:
     stage: build
     when: always
     before_script:
+        - df
+        - cat /etc/resolv.conf
+        - cat /etc/hosts
+
         - docker info
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     script:
