@@ -1,10 +1,10 @@
-image: docker:stable-dind
+image: docker:latest
 
 variables:
     SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
     CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+    #DOCKER_HOST: tcp://docker:2375
+    #DOCKER_TLS_CERTDIR: ""
 
 stages:
     - build
