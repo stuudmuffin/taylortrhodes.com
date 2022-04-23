@@ -29,7 +29,10 @@ Deploy Site:
     stage: deploy
     when: on_success
     script:
+        #- cp ${SSH_KEY} ./ssh_key
+        - chmod 600 ${SSH_KEY}
         - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
-          "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
-          docker pull $CONTAINER_BRANCH_IMAGE"
+          "echo hello"
+        #  "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+        #  docker pull $CONTAINER_BRANCH_IMAGE"
     
