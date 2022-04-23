@@ -1,8 +1,12 @@
-image: docker:latest
+image: docker:19.03.12
 
 variables:
-  SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
-  CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
+    SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
+    CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
+    DOCKER_TLS_CERTDIR: "/certs"
+
+services:
+    - docker:19.03.12-dind
 
 stages:
     - build
