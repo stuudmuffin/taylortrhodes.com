@@ -12,6 +12,8 @@ Build Image:
     stage: build
     when: always
     before_script:
+        - service docker start
+        - docker info
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     script:
         - VERSION_NUMBER=1.0.0
