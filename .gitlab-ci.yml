@@ -1,13 +1,36 @@
 image: docker:latest
 
-before_script:
-    - docker info
+variables:
+  SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
+  CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
 
-build_image:
+stages:
+    - build
+    - deploy
+
+Build Image:
+    stage: build
+    when: always
+    before_script:
+        - docker info
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     script:
-        - docker build -t c_nginxphp .
-        - docker run c_nginxphp
+        - VERSION_NUMBER=1.0.0
+        - CONTAINER_VERSION_IMAGE=$DOCKER_REGISTRY:v${VERSION_NUMBER}
+
+        - docker build -t $CONTAINER_BRANCH_IMAGE .
+        - docker push $CONTAINER_BRANCH_IMAGE
+        - docker system prune -af --filter "until=$((30*24))h"
     artifacts:
         paths:
         - src
 
+Deploy Site:
+    stage: deploy
+    when: always
+    script:
+        - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
+          "docker info &&
+          docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+          docker pull $CONTAINER_BRANCH_IMAGE"
+    
