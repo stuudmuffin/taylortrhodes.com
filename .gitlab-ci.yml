@@ -15,7 +15,7 @@ stages:
 
 Build Image:
     stage: build
-    when: always
+    when: manual
     before_script:
         - nslookup dl-cdn.alpinelinux.org
         - docker info
@@ -33,9 +33,10 @@ Build Image:
 
 Deploy Site:
     stage: deploy
-    when: on_success
+    when: manual
     script:
         #- cp ${SSH_KEY} ./ssh_key
+        - cat ${SSH_KEY}
         - chmod 600 ${SSH_KEY}
         - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
           "echo hello"
