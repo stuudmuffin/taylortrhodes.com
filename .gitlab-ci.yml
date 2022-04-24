@@ -15,7 +15,7 @@ stages:
 
 Build Image:
     stage: build
-    when: manual
+    when: always
     #rules:
     #  - changes: 
     #    - ./Dockerfile
@@ -38,7 +38,7 @@ Build Image:
 
 Deploy Site:
     stage: deploy
-    when: manual
+    when: on_success
     #rules:
     #  - changes: 
     #    - ./Dockerfile
