@@ -14,7 +14,7 @@ Build Image:
     stage: build
     when: always
     before_script:
-        - df
+        - ps -ef | grep docker
         - cat /etc/resolv.conf
         - cat /etc/hosts
 
