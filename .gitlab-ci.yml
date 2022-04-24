@@ -51,5 +51,5 @@ Deploy Site:
           docker pull $CONTAINER_BRANCH_IMAGE &&
           docker stop taylortrhodes.com || true &&
           docker rm taylortrhodes.com || true &&
-          docker run --name=taylortrhodes.com --expose=8085 --restart=always -d $CONTAINER_BRANCH_IMAGE"
+          docker run --name=taylortrhodes.com -p 8085:8085 --restart=always -d $CONTAINER_BRANCH_IMAGE"
     
