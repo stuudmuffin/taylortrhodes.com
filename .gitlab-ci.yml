@@ -15,11 +15,12 @@ stages:
 
 Build Image:
     stage: build
-    rules:
-      - changes: 
-        - ./Dockerfile
-        when: always
-      - when: manual
+    when: manual
+    #rules:
+    #  - changes: 
+    #    - ./Dockerfile
+    #    when: always
+    #  - when: manual
     before_script:
       - nslookup dl-cdn.alpinelinux.org
       - docker info
@@ -37,11 +38,12 @@ Build Image:
 
 Deploy Site:
     stage: deploy
-    rules:
-      - changes: 
-        - ./Dockerfile
-        when: on_success
-      - when: manual
+    when: manual
+    #rules:
+    #  - changes: 
+    #    - ./Dockerfile
+    #    when: on_success
+    #  - when: manual
     script:
         - chmod 600 ${SSH_KEY}
         - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
