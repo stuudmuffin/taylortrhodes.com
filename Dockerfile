@@ -1,4 +1,4 @@
-FROM alpine:3.14
+FROM alpine:3.15.4
 LABEL Maintainer="Taylor Rhodes <taytrho@gmail.com>"
 LABEL Description="Lightweight container with Nginx & PHP 8.0 based on Alpine Linux."
 
