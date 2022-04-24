@@ -35,7 +35,7 @@ Deploy Site:
     stage: deploy
     when: manual
     script:
-        - cp ${SSH_KEY} ./ssh_key
+        - echo ${SSH_KEY} > ./ssh_key
         - chmod 600 ./ssh_key
         - ssh -i ./ssh_key -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
           "echo hello"
