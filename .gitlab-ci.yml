@@ -35,10 +35,9 @@ Deploy Site:
     stage: deploy
     when: manual
     script:
-        #- cp ${SSH_KEY} ./ssh_key
-        - cat ${SSH_KEY}
-        - chmod 600 ${SSH_KEY}
-        - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
+        - cp ${SSH_KEY} ./ssh_key
+        - chmod 600 ./ssh_key
+        - ssh -i ./ssh_key -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
           "echo hello"
         #  "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
         #  docker pull $CONTAINER_BRANCH_IMAGE"
