@@ -17,7 +17,7 @@ Build Image:
     stage: build
     rules:
       - changes: 
-        - Dockerfile
+        - ./Dockerfile
         when: always
       - when: manual
     before_script:
@@ -39,7 +39,7 @@ Deploy Site:
     stage: deploy
     rules:
       - changes: 
-        - Dockerfile
+        - ./Dockerfile
         when: on_success
       - when: manual
     script:
