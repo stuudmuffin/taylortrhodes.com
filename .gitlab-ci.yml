@@ -35,8 +35,6 @@ Deploy Site:
     stage: deploy
     when: manual
     script:
-        - ssh-keygen -t ed25519 -f ./sshkey -q -N ""
-        - cat ./sshkey
         - cp ${SSH_KEY} ./ssh_key
         - chmod 600 ./ssh_key
         - ssh -i ./ssh_key -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
