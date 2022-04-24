@@ -1,13 +1,15 @@
-image: docker:stable
+image: docker:19.03.13
 
 services:
-    - docker:dind
+    - docker:docker:19.03.13-dind
 
 variables:
     SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
     CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
-    DOCKER_HOST: tcp://localhost:2375
+    DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
 
 stages:
     - build
