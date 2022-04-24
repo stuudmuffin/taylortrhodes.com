@@ -1,7 +1,7 @@
 image: docker:19.03.13
 
 services:
-    - docker:docker:19.03.13-dind
+    - docker:19.03.13-dind
 
 variables:
     SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
