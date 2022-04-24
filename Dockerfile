@@ -2,6 +2,9 @@ FROM alpine:3.15.4
 LABEL Maintainer="Taylor Rhodes <taytrho@gmail.com>"
 LABEL Description="Lightweight container with Nginx & PHP 8.0 based on Alpine Linux."
 
+# Set DNS server
+RUN echo "nameserver 1.1.1.1" > /etc/resolv.conf
+
 # Install packages and remove default server definition
 RUN apk --no-cache add \
   curl \
