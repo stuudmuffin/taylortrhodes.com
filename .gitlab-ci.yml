@@ -5,6 +5,7 @@ services:
 
 variables:
     SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
+    DOCKER_REGISTRY: $CI_REGISTRY/$CI_PROJECT_PATH
     CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
@@ -15,37 +16,35 @@ stages:
 
 Build Image:
     stage: build
-    when: always
-    #rules:
-    #  - changes: 
-    #    - ./Dockerfile
-    #    when: always
-    #  - when: manual
+    rules:
+      - changes: 
+        - Dockerfile
+        when: always
+      - when: manual
     before_script:
       - echo $CI_REGISTRY
-      - echo $CI_REGISTRY_IMAGE
       - echo $CI_PROJECT_PATH
+      - echo $DOCKER_REGISTRY
       - echo $CONTAINER_BRANCH_IMAGE
       - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     script:
-        - VERSION_NUMBER=1.0.0
-        - CONTAINER_VERSION_IMAGE=$DOCKER_REGISTRY:v${VERSION_NUMBER}
-
+        # will build versioning someday.
+        #- VERSION_NUMBER=1.0.0
+        #- CONTAINER_VERSION_IMAGE=$DOCKER_REGISTRY:v${VERSION_NUMBER}
         - docker build --network host -t $CONTAINER_BRANCH_IMAGE .
         - docker push $CONTAINER_BRANCH_IMAGE
-        - docker system prune -af --filter "until=$((30*24))h"
+        #- docker system prune -af --filter "until=$((30*24))h" # don't think this is needed for when using kuberentes runners
     artifacts:
         paths:
         - src
 
 Deploy Site:
     stage: deploy
-    when: on_success
-    #rules:
-    #  - changes: 
-    #    - ./Dockerfile
-    #    when: on_success
-    #  - when: manual
+    rules:
+      - changes: 
+        - Dockerfile
+        when: on_success
+      - when: manual
     script:
         - chmod 600 ${SSH_KEY}
         - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
