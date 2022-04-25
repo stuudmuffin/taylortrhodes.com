@@ -23,6 +23,9 @@ Build Image:
     #  - when: manual
     before_script:
       - echo $CI_REGISTRY
+      - echo $CI_REGISTRY_IMAGE
+      - echo $CI_PROJECT_PATH
+      - echo $CONTAINER_BRANCH_IMAGE
       - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     script:
         - VERSION_NUMBER=1.0.0
