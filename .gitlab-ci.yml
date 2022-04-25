@@ -29,7 +29,7 @@ Build Image:
         - VERSION_NUMBER=1.0.0
         - CONTAINER_VERSION_IMAGE=$DOCKER_REGISTRY:v${VERSION_NUMBER}
 
-        - docker build -t $CONTAINER_BRANCH_IMAGE .
+        - docker build --network host -t $CONTAINER_BRANCH_IMAGE .
         - docker push $CONTAINER_BRANCH_IMAGE
         - docker system prune -af --filter "until=$((30*24))h"
     artifacts:
