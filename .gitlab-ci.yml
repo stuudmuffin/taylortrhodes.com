@@ -22,8 +22,7 @@ Build Image:
     #    when: always
     #  - when: manual
     before_script:
-      - nslookup dl-cdn.alpinelinux.org
-      - docker info
+      - echo $CI_REGISTRY
       - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     script:
         - VERSION_NUMBER=1.0.0
