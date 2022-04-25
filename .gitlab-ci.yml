@@ -1,0 +1,55 @@
+image: docker:19.03.13
+
+services:
+    - docker:19.03.13-dind
+
+variables:
+    SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
+    CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+
+stages:
+    - build
+    - deploy
+
+Build Image:
+    stage: build
+    when: always
+    #rules:
+    #  - changes: 
+    #    - ./Dockerfile
+    #    when: always
+    #  - when: manual
+    before_script:
+      - nslookup dl-cdn.alpinelinux.org
+      - docker info
+      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    script:
+        - VERSION_NUMBER=1.0.0
+        - CONTAINER_VERSION_IMAGE=$DOCKER_REGISTRY:v${VERSION_NUMBER}
+
+        - docker build --network host -t $CONTAINER_BRANCH_IMAGE .
+        - docker push $CONTAINER_BRANCH_IMAGE
+        - docker system prune -af --filter "until=$((30*24))h"
+    artifacts:
+        paths:
+        - src
+
+Deploy Site:
+    stage: deploy
+    when: on_success
+    #rules:
+    #  - changes: 
+    #    - ./Dockerfile
+    #    when: on_success
+    #  - when: manual
+    script:
+        - chmod 600 ${SSH_KEY}
+        - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
+          "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+          docker pull $CONTAINER_BRANCH_IMAGE &&
+          docker stop taylortrhodes.com || true &&
+          docker rm taylortrhodes.com || true &&
+          docker run --name=taylortrhodes.com -p 8085:80 --restart=always -d $CONTAINER_BRANCH_IMAGE"
+    
