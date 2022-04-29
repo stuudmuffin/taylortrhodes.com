@@ -15,42 +15,34 @@ stages:
     - deploy
 
 Build Image:
-    stage: build
-    rules:
-      - changes: 
-        - Dockerfile
-        when: always
-      - when: manual
-    before_script:
-      - echo $CI_REGISTRY
-      - echo $CI_PROJECT_PATH
-      - echo $DOCKER_REGISTRY
-      - echo $CONTAINER_BRANCH_IMAGE
-      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    script:
-        # will build versioning someday.
-        #- VERSION_NUMBER=1.0.0
-        #- CONTAINER_VERSION_IMAGE=$DOCKER_REGISTRY:v${VERSION_NUMBER}
-        - docker build --network host -t $CONTAINER_BRANCH_IMAGE .
-        - docker push $CONTAINER_BRANCH_IMAGE
-        #- docker system prune -af --filter "until=$((30*24))h" # don't think this is needed for when using kuberentes runners
-    artifacts:
-        paths:
-        - src
+  stage: build
+  when: always
+  before_script:
+    - echo $CI_REGISTRY
+    - echo $CI_PROJECT_PATH
+    - echo $DOCKER_REGISTRY
+    - echo $CONTAINER_BRANCH_IMAGE
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    # will build versioning someday.
+    #- VERSION_NUMBER=1.0.0
+    #- CONTAINER_VERSION_IMAGE=$DOCKER_REGISTRY:v${VERSION_NUMBER}
+    - docker build --network host -t $CONTAINER_BRANCH_IMAGE .
+    - docker push $CONTAINER_BRANCH_IMAGE
+    #- docker system prune -af --filter "until=$((30*24))h" # don't think this is needed for when using kuberentes runners
+  artifacts:
+    paths:
+    - src
 
 Deploy Site:
-    stage: deploy
-    rules:
-      - changes: 
-        - Dockerfile
-        when: on_success
-      - when: manual
-    script:
-        - chmod 600 ${SSH_KEY}
-        - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
-          "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
-          docker pull $CONTAINER_BRANCH_IMAGE &&
-          docker stop taylortrhodes.com || true &&
-          docker rm taylortrhodes.com || true &&
-          docker run --name=taylortrhodes.com -p 8085:80 --restart=always -d $CONTAINER_BRANCH_IMAGE"
+  stage: deploy
+  when: on_success
+  script:
+    - chmod 600 ${SSH_KEY}
+    - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
+      "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+      docker pull $CONTAINER_BRANCH_IMAGE &&
+      docker stop taylortrhodes.com || true &&
+      docker rm taylortrhodes.com || true &&
+      docker run --name=taylortrhodes.com -p 8085:80 --restart=always -d $CONTAINER_BRANCH_IMAGE"
     
