@@ -7,12 +7,14 @@ variables:
     SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
     DOCKER_REGISTRY: $CI_REGISTRY/$CI_PROJECT_PATH
     CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
+    LOCAL_BUILD_PATH: "src/"
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
 
 stages:
     - build
     - deploy
+    - deploy_s3
 
 Build Image:
   stage: build
@@ -45,4 +47,13 @@ Deploy Site:
       docker stop taylortrhodes.com || true &&
       docker rm taylortrhodes.com || true &&
       docker run --name=taylortrhodes.com -p 8085:80 --restart=always -d $CONTAINER_BRANCH_IMAGE"
+
+Deploy S3:
+  stage: deploy_s3
+  needs: []
+  when: always
+  script:
+    - export $(grep -v '^#' ${SYS_VARS} | xargs)
+    - aws s3 rm s3://${s3_bucket_name} --recursive
+    - aws s3 cp ${LOCAL_BUILD_PATH} s3://${s3_bucket_name} --recursive
     
