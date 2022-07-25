@@ -50,6 +50,7 @@ Deploy Site:
 
 Deploy S3:
   stage: deploy_s3
+  image: registry.gitlab.com/studmuffin/taylortrhodes.com
   needs: []
   when: always
   script:
