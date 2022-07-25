@@ -53,7 +53,9 @@ Deploy S3:
   needs: []
   when: always
   script:
-    - export $(grep -v '^#' ${SYS_VARS} | xargs)
+    - aws configure set region us-east-1 ${AWS_REGION}
+    - aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
+    - aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
     - aws s3 rm s3://${s3_bucket_name} --recursive
     - aws s3 cp ${LOCAL_BUILD_PATH} s3://${s3_bucket_name} --recursive
     
