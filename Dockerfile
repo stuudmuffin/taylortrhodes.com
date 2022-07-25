@@ -7,7 +7,7 @@ RUN echo "nameserver 1.1.1.1" > /etc/resolv.conf
 
 # Install packages and remove default server definition
 RUN apk --no-cache add \
-  awscli \
+  aws-cli \
   curl \
   nginx \
   php8 \
