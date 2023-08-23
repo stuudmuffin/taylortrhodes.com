@@ -19,6 +19,6 @@ A second job logs into the cloud server via ssh and attempts to pull and startup
 My cloud server is running nginx, which just proxies the traffic to the docker contianer. This way I can also handle SSL with the host system across multiple containers, and don't have to worry about SSL inside the container.
 
 ### 2 AWS S3 and CloudFront
-First you have to create your bucket. It's okat to make the bucket NOT public.
+First you have to create your bucket. It's okay to make the bucket NOT public.
 Second you create a CloudFront distribution, and use an OAI (Origin Access Identity). This allows the specific cloudfront distribution permissions to access the S3 Bucket objects.
 Now you can use AWS Access Key Credentials in the CI to push updates to the bucket.

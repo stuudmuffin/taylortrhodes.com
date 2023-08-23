@@ -3,7 +3,7 @@ LABEL Maintainer="Taylor Rhodes <taytrho@gmail.com>"
 LABEL Description="Lightweight container with Nginx & PHP 8.0 based on Alpine Linux."
 
 # Set DNS server
-RUN echo "nameserver 1.1.1.1" > /etc/resolv.conf
+COPY build/resolv.conf /etc/resolv.conf
 
 # Install packages and remove default server definition
 RUN apk --no-cache add \
@@ -33,14 +33,14 @@ RUN apk --no-cache add \
 RUN ln -s /usr/bin/php8 /usr/bin/php
 
 # Configure nginx
-COPY config/nginx.conf /etc/nginx/nginx.conf
+COPY build/nginx.conf /etc/nginx/nginx.conf
 
 # Configure PHP-FPM
-COPY config/fpm-pool.conf /etc/php8/php-fpm.d/www.conf
-COPY config/php.ini /etc/php8/conf.d/custom.ini
+COPY build/fpm-pool.conf /etc/php8/php-fpm.d/www.conf
+COPY build/php.ini /etc/php8/conf.d/custom.ini
 
 # Configure supervisord
-COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY build/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Setup document root
 RUN mkdir -p /var/www/html
