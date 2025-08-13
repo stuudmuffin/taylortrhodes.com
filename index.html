@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Taylor T. Rhodes — DevOps, Building & Making</title>
+  <meta name="description" content="DevOps engineer, maker, bus conversion, welding, woodworking, and technology research.">
+  <style>
+    /* ====== Design tokens ====== */
+    :root{
+      --bg:#0b0d10; --card:#14171c; --nav:#1d2229; --ink:#dfe8f1; --muted:#92a0b3;
+      --brand:#64b5f6; --accent:#a78bfa; --ring:#64b5f680; --radius:16px;
+      --contentW:980px; --gap:28px; --railW:280px;
+      --padInline:24px; --padBlockTop:24px; --padBlockBottom:0px;
+      --pad:var(--padBlockTop) var(--padInline) var(--padBlockBottom) var(--padInline);
+      --pad2:calc(var(--padInline)*2);
+      --card-active:#161b21; --border-active:rgba(100,181,246,.5);
+      --railCol:var(--railW); --totalW:calc(var(--contentW) + var(--gap) + var(--railCol));
+      --mobileBarGap:16px; --mobileNavH:0px;
+      --shadow: 0 5px 15px rgba(0,0,0,.45);
+      --glow: 0 0 0 1px rgba(34, 63, 86, 0.18), 0 0 15px rgba(60, 111, 152, 0.18);
+    }
+    @media (prefers-color-scheme:light){
+      :root{ --bg:#f7f8fb; --card:#fff; --ink:#1b2430; --muted:#52607a; --card-active:#f0f3f8; --border-active:rgba(0,0,0,.12); }
+    }
+
+    /* ====== Base ====== */
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth; overflow-x:hidden}
+    body{margin:0;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:var(--ink);background:var(--bg)}
+    a{color:inherit;text-decoration:none}
+    a:hover{color:var(--brand)}
+    img{max-width:100%;display:block}
+    .container{max-width:calc(var(--totalW) + var(--pad2));margin:0 auto;padding:var(--pad)}
+    :focus{outline:none}
+    :focus-visible{box-shadow:0 0 0 3px var(--ring);border-radius:10px}
+
+    /* ====== Layout ====== */
+    .grid{display:grid;grid-template-columns:minmax(0, min(var(--contentW), calc(100% - (var(--railCol) + var(--gap))))) var(--railCol);gap:var(--gap);transition:grid-template-columns .6s ease, gap .6s ease}
+    .stack{display:block}
+    .stack > .card{margin-bottom:16px}
+    .stack > .card:last-of-type{margin-bottom:0}
+
+    /* ==== Cosmic Background Canvas ==== */
+    #bg-canvas{
+      position: fixed; inset: 0; z-index: -1; width: 100vw; height: 100vh;
+      filter: contrast(110%) saturate(110%);
+    }
+
+    /* ====== Hero ====== */
+    .hero{position:relative;border-radius:var(--radius);overflow:hidden;background:#000}
+    .hero::before{content:"";display:block;padding-top:38%}
+    .hero img{position:absolute;inset:0;height:100%;width:100%;object-fit:cover;filter:contrast(1.05) saturate(1.05)}
+    .hero .overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.40), rgba(0,0,0,.25) 35%, rgba(0,0,0,.55))}
+    .hero .text{position:absolute;inset:auto 0 0 0;padding:28px 28px 10px 28px;color:#fff;max-width:min(var(--contentW), calc(100% - (var(--railCol) + var(--gap))))}
+    .hero .kicker{letter-spacing:.18em;text-transform:uppercase;font-size:.75rem;color:#cfe3ff}
+    .hero .title{font-size:clamp(1.6rem, 3vw + 1rem, 3rem);font-weight:800;margin:.35rem 0}
+    .hero .subtitle{color:#eaf2ff;max-width:65ch}
+    @media (max-width:750px){
+      .hero{background:transparent}
+      .hero::before{display:none}
+      .hero img{position:relative;inset:auto;height:auto;width:100%;object-fit:cover}
+      .hero .overlay{display:none}
+      .hero .text{position:static;padding:16px 16px 10px 16px;background:#1d2d45;color:var(--ink)}
+      .hero .kicker,.hero .subtitle{color:var(--muted)}
+    }
+
+    /* ====== Sections ====== */
+    section{scroll-margin-top:108px}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow), var(--glow);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transform-style: preserve-3d;
+      will-change: transform, opacity;
+      padding:22px;
+      transition:background .2s ease, border-color .2s ease
+    }
+    .flash{ animation: flash 1.5s ease-out 1; }
+    @keyframes flash{
+      0% { 
+        box-shadow: 0 0 0 0 rgba(100,181,246,.0);
+        background: rgba(100,181,246,.12);
+      }
+      15%{
+        box-shadow: 0 0 0 1px rgba(54, 97, 132, 0.18);
+        background: rgba(100,181,246,.06);}
+      55%{
+        box-shadow: 0 0 0 8px rgba(100,181,246,.18);
+        background: rgba(100,181,246,.06);}
+      100%{
+        box-shadow: var(--shadow), var(--glow);
+        background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      }
+    }
+
+    h2{font-size:1.25rem;margin:0 0 .25rem}
+    .muted{color:var(--muted)}
+    .tag{display:inline-block;padding:.25rem .5rem;border-radius:999px;background:rgba(100,181,246,.12);color:#cfe3ff;font-size:.75rem;margin:0 .4rem .4rem 0}
+
+    /* Content links underline only in content column */
+    .stack > .card:not(.mobileSection) a{ text-decoration: underline; text-underline-offset: 2px }
+    .stack > .card:not(.mobileSection) a:hover{ text-decoration-thickness: 2px }
+    .rail a, .mobileSection a, .mobileMenu a, .quickLinks a{ text-decoration: none }
+
+    /* ====== Right Rail (Desktop) ====== */
+    .rail{position:sticky; top:18px; align-self:start; height:fit-content; background:var(--nav); border-radius:var(--radius); padding:14px; overflow:hidden; width:100%}
+    .rail h3{margin:6px 10px 10px;font-size:.9rem;color:var(--muted)}
+    .rail ul{list-style:none;margin:0;padding:0}
+    .rail a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:var(--muted);transition:background-color .75s ease-out, color .75s ease-out}
+    .rail a .dot{width:8px;height:8px;border-radius:50%;background-color:#445;opacity:.7;flex:0 0 8px}
+    .rail a.flash{background-color:rgba(100,181,246,.18);color:var(--ink);transition:background-color .2s ease-in, color .2s ease-in}
+    .rail a.flash .dot{background-color:var(--brand);opacity:1;transition:background-color .2s ease-in, opacity .2s ease-in}
+
+    /* ====== Mobile In-Flow Nav ====== */
+    .mobileSection{ background:var(--nav); position:static; z-index:20 }
+    .mobileSection .bar{ position:static; z-index:25; display:flex; align-items:center; gap:0; background:var(--nav) }
+    .mobileSection .leftTap{display:flex;align-items:center;gap:8px;flex:1;padding:0 12px;border-radius:12px;cursor:pointer}
+    .mobileSection .leftTap:active{background:rgba(255,255,255,.04)}
+    .mobileSection .hamburger{display:inline-block;margin-right:8px;line-height:0}
+    .mobileSection .menuText{font-weight:600}
+    @media (min-width:981px){ .mobileSection .leftTap{display:none} .mobileSection .leftLabel{display:flex} }
+    .mobileSection .leftLabel{display:none;align-items:center;gap:8px;flex:0 0 auto;padding:0 12px;color:var(--muted);font-weight:600}
+    @media (min-width:981px){ .mobileSection .leftLabel{display:flex} }
+    .mobileSection .rightStuff{display:flex;flex:1;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);padding:10px 0}
+    .mobileSection .quickLinks{display:flex;gap:10px;flex-wrap:wrap}
+    .mobileSection .quickLinks a{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:rgba(100,181,246,.12);color:#cfe3ff;font-size:.8rem}
+    .mobileSection .rightMenuButton{display:none;align-items:center;gap:8px;padding:0 12px;border-radius:12px;cursor:pointer}
+
+    .mobileMenu{display:none;margin-top:8px;border-radius:12px;background:var(--nav);border:1px solid rgba(255,255,255,.1);overflow:hidden}
+    .mobileMenu.open{display:block}
+    .mobileMenu a{display:block;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .mobileMenu a:last-child{border-bottom:none}
+    .mobileMenu.floating{position:fixed; z-index:60; left:0; top:0; width:auto; max-height:60vh; overflow:auto; box-shadow:0 12px 30px rgba(0,0,0,.35); border-radius:12px }
+
+    #linkMenu.mobileMenu a{ display:flex; align-items:center; gap:12px }
+    #linkMenu.mobileMenu a .path{ color:var(--muted); opacity:.85; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55% }
+    #linkMenu.mobileMenu a .title{ margin-left:auto; text-align:right; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:45%; font-size:1rem; line-height:1.2 }
+
+    @media (max-width:980px){ .mobileSection .quickLinks{display:none} .mobileSection .rightMenuButton{display:flex} }
+
+    /* Mobile-only: pure CSS sticky (no JS fixed fallback) => zero jitter */
+    @media (max-width:980px){
+      .mobileSection{ position:sticky; top:max(0px, env(safe-area-inset-top)) }
+      .mobileSection .bar{ position:sticky; top:max(0px, env(safe-area-inset-top)) }
+      .card{transition:background-color .75s ease-out, border-color .75s ease-out, box-shadow .75s ease-out}
+      .card.flash{background-color:#1c2330; border-color:rgba(100,181,246,.5); box-shadow:0 0 0 1px rgba(100,181,246,.25) inset; transition:background-color .2s ease-in, border-color .2s ease-in, box-shadow .2s ease-in}
+    }
+
+    .avatar-wrap{ width:120px; aspect-ratio:1/1; border-radius:50%; overflow:hidden; margin-inline:auto }
+    .avatar-wrap img{ width:100%; height:100%; object-fit:cover }
+
+    /* ====== Lists & grids ====== */
+    .grid2{display:grid;grid-template-columns:1fr;gap:8px}
+    @media (max-width:700px){ .grid2{grid-template-columns:1fr} }
+    #projectsGrid.grid-anim{overflow:hidden;transition:height .35s ease}
+    @media (prefers-reduced-motion:reduce){
+      *{ animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+      #bg-canvas{ display:none; }
+      #projectsGrid.grid-anim{transition:none}
+    }
+    .proj{padding:10px 12px 8px;border:1px dashed rgba(255,255,255,.08);border-radius:12px;position:relative;cursor:pointer;transition:background .25s ease,border-color .25s ease, box-shadow .25s ease;transform-origin:top left}
+    .proj h3{margin:24px 0 12px;line-height:1.25}
+    .proj p{margin:0}
+    .proj .details p{margin:12px 0 0}
+    .proj > *:first-child{margin-top:0}
+    .proj > *:last-child{margin-bottom:0}
+    .proj:hover{border-color:rgba(255,255,255,.18)}
+    .proj.expanded{grid-column:1 / -1;border-style:solid;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .proj .details{display:block;overflow:hidden;height:0;opacity:0;margin-top:6px;color:var(--muted);transition:height .35s ease, opacity .25s ease}
+    .proj.expanded .details{opacity:1}
+
+    footer{padding:48px 0;color:var(--muted);min-height:40vh;display:flex;align-items:flex-end}
+
+    /* Crossfade between rail and mobile bar */
+    body.show-mobile-nav{ --railCol:0px; --gap:0px; --totalW:var(--contentW) }
+    body.show-mobile-nav .grid{ gap:0 }
+    body.show-mobile-nav .container{ max-width:calc(var(--contentW) + var(--pad2)) }
+
+    /* Prevent rail flash on initial mobile load */
+    @media (max-width:980px){ :root{ --railCol:0px; --gap:0px; --totalW:var(--contentW) } .grid{ gap:0 } .container{ max-width:calc(var(--contentW) + var(--pad2)) } .rail{ opacity:0; pointer-events:none } }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <header id="home" class="container">
+    <div class="hero" role="img" aria-label="Banner image with overlay text">
+      <img src="https://www.taylortrhodes.com/images/banner.jpg" width="2160" height="472" alt="" />
+      <div class="overlay" aria-hidden="true"></div>
+      <div class="text">
+        <div class="kicker">Maker • Automator • Friend</div>
+        <div class="title">Taylor T. Rhodes</div>
+        <p class="subtitle">I build resilient systems and real-world things — from Cloud to HomeLab design to welding jeep parts and a bus conversion. I document what I learn so others can move faster.</p>
+        <div>
+          <span class="tag">AWS</span>
+          <span class="tag">DevOps</span>
+          <span class="tag">Terraform</span>
+          <span class="tag">Hardware</span>
+          <span class="tag">Security</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container grid">
+    <!-- Content column -->
+    <div class="stack">
+      <section id="mobileNavSection" class="card mobileSection" aria-label="Mobile section navigation">
+        <div class="bar">
+          <div class="leftTap" id="mobileLeft" role="button" tabindex="0" aria-expanded="false" aria-controls="mobileMenu">
+            <span class="hamburger" aria-hidden="true">
+              <svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <span class="menuText" id="currentSec">Menu</span>
+          </div>
+          <div class="leftLabel" id="desktopLeftLabel" aria-hidden="true">Links</div>
+          <div class="rightStuff">
+            <div class="rightMenuButton" id="mobileRight" role="button" tabindex="0" aria-expanded="false" aria-controls="linkMenu">
+              <span class="menuText">Links</span>
+              <span class="chev" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 7l5 6 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </div>
+            <nav class="quickLinks" aria-label="Quick links">
+              <a href="/blog">Blog</a>
+              <a href="/resume.pdf">Resume (PDF)</a>
+              <a href="https://github.com/stuudmuffin">GitHub</a>
+              <a href="https://www.linkedin.com/in/taylortrhodes">LinkedIn</a>
+              <a href="mailto:hello@taylortrhodes.com">Email</a>
+            </nav>
+          </div>
+        </div>
+        <nav id="mobileMenu" class="mobileMenu" aria-hidden="true">
+          <a href="#home">Home</a>
+          <a href="#about">About</a>
+          <a href="#projects">Projects</a>
+          <a href="#writing">Writing</a>
+          <a href="#skills">Skills</a>
+          <a href="#resume">Resume</a>
+          <a href="#contact">Contact</a>
+        </nav>
+        <nav id="linkMenu" class="mobileMenu" aria-hidden="true">
+          <a href="/blog"><span class="path">/blog</span><span class="title">Blog</span></a>
+          <a href="/resume.pdf"><span class="path">/resume.pdf</span><span class="title">Resume (PDF)</span></a>
+          <a href="https://github.com/stuudmuffin"><span class="path">github.com/stuudmuffin</span><span class="title">GitHub</span></a>
+          <a href="https://gitlab.com/studmuffin"><span class="path">gitlab.com/studmuffin</span><span class="title">GitLab</span></a>
+          <a href="https://www.linkedin.com/in/taylortrhodes"><span class="path">linkedin.com/taylortrhodes</span><span class="title">LinkedIn</span></a>
+        </nav>
+      </section>
+
+      <section id="about" class="card">
+        <div class="avatar-wrap"><img src="https://www.taylortrhodes.com/images/avatar.jpg" alt=""></div>
+        <center><h2>About Me</h2></center>
+        <p class="muted">I am a Remote working Full Stack Engineer. Client → Internet → Server, I troubleshoot it all. I like learning new tech, implementing it, and sharing practical notes. When I'm not in the terminal, I'm either working on all manners of personal projects and hobbies, or exploring the world around me. Custom Fabrication and car mechanics, HomeLab Design and Home Automation, AV System Design, Video Game Design, Appliance repair and Sustainable Living. I have a hard time choosing just one thing to experience. I want to see and try it all if I can.</p>
+      </section>
+
+      <section id="projects" class="card">
+        <h2>Projects</h2>
+        <div class="grid2" id="projectsGrid">
+          <article class="proj" data-key="0" aria-expanded="false">
+            <h3>Bus Conversion — Tiny Home</h3>
+            <p class="muted">Designing a comfortable RV from scratch is a lot of work.</p>
+            <div class="details">
+              <p>My wife and I are converting a 2008 MCI D4500 into a Tiny Home on Wheels. We purchased 'Bessi' in the Spring of 2023, and have since been designing and building the perfect home on wheels for our needs. Join us over at <a href="https://autorventure.com" target="_blank">AutorVenture</a> to follow the fun!</p>
+            </div>
+          </article>
+          <article class="proj" data-key="1" aria-expanded="false">
+            <h3>Home Lab & Networking</h3>
+            <p class="muted">Proxmox + TrueNAS, 10Gb networking, MikroTik routing, All the VM's a nerd could want.</p>
+            <div class="details">
+              <p>Segmentation with VLANs, 10Gb core. Observability via Prometheus + Grafana. My homelab helps me to learn all about any services and technologies I desire. The center is a 12-Bay server with 64 threads of compute. Not having to pay for a cloud just to develop software is a great advantage to have.</p>
+            </div>
+          </article>
+          <article class="proj" data-key="2" aria-expanded="false">
+            <h3>Factorio - Web Control</h3>
+            <p class="muted">Ever heard of Factorio? It's basically software engineering gamified.</p>
+            <div class="details">
+              <img src="https://www.taylortrhodes.com/images/pic01.jpg" alt="Factorio" />
+              <p>I started the first open source remote server management tool for a game called Factorio. My friends and I started playing the game early on in its development. After getting a reliable remote managment tool created, we then experimented on other customization options within the game. Eventually we caught the eye of the developers, and some of our ideas and examples made it into the vanilla game code.<br /><br /><a href="https://gitlab.com/3RaGaming/Web_Control" target="_blank">Click to open the Repo</a></p>
+            </div>
+          </article>
+          <article class="proj" data-key="3" aria-expanded="false">
+            <h3>Edge Camera Platform</h3>
+            <p class="muted">Low-latency 360° camera stitching and event-driven capture using Python.</p>
+            <div class="details">
+              <p>Building my own security system into my bus is a huge endevour. But to stay safe and aware on the road, I see no better path. Getting a 360 continuous feed of security around me will aid my driving, and know what's happening around my home at all times.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="writing" class="card"><h2>Writing</h2><p class="muted">Research notes and how‑tos. <em>Swap these with real posts later.</em></p></section>
+      <section id="skills" class="card"><h2>Skills</h2><p><strong>Cloud:</strong> AWS (VPC, EC2, S3, ECS, EKS, RDS, API GW, EventBridge, CloudFront, etc.), Terraform, <br><strong>Systems:</strong> Linux, Windows, MacOS, Docker, Kubernetes, Proxmox, Ubiquiti, MikroTik, Cisco, <br><strong>Data/Dev:</strong> PHP, Python, Node.js, SQL, Airflow, event-driven patterns</p></section>
+      <section id="resume" class="card"><h2>Resume</h2><p>I'm still in the process of putting the relevent information here. So for now, <a href="https://docs.google.com/document/d/1H1ZLoKES5Z55T4625fQd2n1P39fwZWFGzAeU7jRV7rE/view" target="_blank">View my Full Resume in Google Drive</a>.</p><p><strong>SoftServe:</strong> I did stuff here<br><strong>Crisp:</strong> I did stuff here too</p></section>
+      <section id="contact" class="card"><h2>Contact</h2><p class="muted"><a href="https://www.linkedin.com/in/taylortrhodes">Tap here to reach me on Linkedin. It's the best way for now</a><br /><br /> I'm open to consulting, collaborations, and nerdy projects.</p></section>
+      <footer class="muted">©&nbsp;<span id="year"></span>&nbsp;Taylor T. Rhodes. Built as a single static file.</footer>
+    </div>
+
+    <!-- Right-side Rail (desktop) -->
+    <aside class="rail" aria-label="Section navigation">
+      <h3>On this page</h3>
+      <ul id="railNav">
+        <li><a href="#home"><span class="dot"></span> Home</a></li>
+        <li><a href="#about"><span class="dot"></span> About</a></li>
+        <li><a href="#projects"><span class="dot"></span> Projects</a></li>
+        <li><a href="#writing"><span class="dot"></span> Writing</a></li>
+        <li><a href="#skills"><span class="dot"></span> Skills</a></li>
+        <li><a href="#resume"><span class="dot"></span> Resume</a></li>
+        <li><a href="#contact"><span class="dot"></span> Contact</a></li>
+      </ul>
+    </aside>
+  </main>
+
+  <script>
+  /* =====================
+     Interactive Background
+     ===================== */
+  ;(()=>{
+    const c = document.getElementById('bg-canvas');
+    const ctx = c.getContext('2d');
+    let W, H, DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const particles = []; const MAX = 90; const LINK_DIST = 140; let mouse = {x:0,y:0,active:false};
+
+    function resize(){ W = c.width = Math.floor(innerWidth * DPR); H = c.height = Math.floor(innerHeight * DPR); c.style.width = innerWidth + 'px'; c.style.height = innerHeight + 'px'; }
+    resize(); addEventListener('resize', resize);
+
+    function rand(a,b){ return Math.random()*(b-a)+a }
+
+    class P{ constructor(){ this.x=rand(0,W); this.y=rand(0,H); this.vx=rand(-.25,.25); this.vy=rand(-.25,.25); this.r=rand(1.2,2.2)*DPR; this.h=rand(0,360); }
+      step(){
+        // gentle drift
+        this.x+=this.vx; this.y+=this.vy;
+        // mouse repulsion
+        if(mouse.active){ const dx=this.x-mouse.x, dy=this.y-mouse.y; const d=Math.hypot(dx,dy); if(d<180*DPR){ const f = (180*DPR-d)/ (180*DPR); this.x += (dx/d||0)*f*2.2; this.y += (dy/d||0)*f*2.2; }
+        }
+        // bounds warp
+        if(this.x<0) this.x=W; if(this.x>W) this.x=0; if(this.y<0) this.y=H; if(this.y>H) this.y=0;
+      }
+      draw(){ ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        const g = ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r*2.8);
+        g.addColorStop(0, 'rgba(167,139,250,.9)'); g.addColorStop(1, 'rgba(100,181,246,.1)');
+        ctx.fillStyle = g; ctx.fill(); }
+    }
+
+    for(let i=0;i<MAX;i++) particles.push(new P());
+
+    function frame(){ ctx.clearRect(0,0,W,H);
+      // links
+      for(let i=0;i<particles.length;i++){
+        const a=particles[i]; a.step();
+        for(let j=i+1;j<particles.length;j++){
+          const b=particles[j]; const dx=a.x-b.x, dy=a.y-b.y; const d2=dx*dx+dy*dy;
+          if(d2 < (LINK_DIST*DPR)*(LINK_DIST*DPR)){
+            const o = 1 - Math.sqrt(d2)/(LINK_DIST*DPR);
+            ctx.strokeStyle = `rgba(100,181,246,${o*.25})`;
+            ctx.lineWidth = 1*DPR; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+          }
+        }
+        a.draw();
+      }
+      requestAnimationFrame(frame);
+    }
+    frame();
+
+    c.addEventListener('pointermove', (e)=>{ const rect = c.getBoundingClientRect(); mouse.x = (e.clientX-rect.left)*DPR; mouse.y=(e.clientY-rect.top)*DPR; mouse.active = true; });
+    c.addEventListener('pointerleave', ()=>{ mouse.active=false; });
+  })();
+</script>
+
+  <!-- JS: click flash + load-safe sizing (no fixed fallback on mobile) -->
+  <script>
+  (function(){
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+    const railLinks = Array.from(document.querySelectorAll('#railNav a'));
+    const currentSec = document.querySelector('#mobileNavSection #currentSec');
+
+    /* ===== Utils ===== */
+    const isMobile = () => window.matchMedia('(max-width:980px)').matches;
+    const smoothJumpTo = (id) => { const el = document.querySelector(id); if(!el) return; el.scrollIntoView({ behavior:'smooth', block:'start' }); };
+    const labelFor = (_id) => 'Menu';
+    const setLabelActive = (id) => { if (currentSec && isMobile()) currentSec.textContent = labelFor(id); };
+
+    /* ===== Click flash (no persistent active) ===== */
+    function clearAllLinkStates(){ railLinks.forEach(a => { a.classList.remove('flash'); a.classList.remove('active'); }); }
+    function flashHighlight(id, linkEl){
+      const sec = document.querySelector(id);
+      clearAllLinkStates();
+      if (isMobile()){
+        const mobileLeft = document.getElementById('mobileLeft');
+        sec?.classList.add('flash');
+        mobileLeft?.classList.add('flash');
+        linkEl?.classList.add('flash');
+        setTimeout(()=>{ sec?.classList.remove('flash'); mobileLeft?.classList.remove('flash'); linkEl?.classList.remove('flash'); }, 1500);
+        return;
+      }
+      linkEl?.classList.add('flash');
+      sec?.classList.add('flash');
+      setTimeout(()=>{ linkEl?.classList.remove('flash'); sec?.classList.remove('flash'); }, 1500);
+    }
+    railLinks.forEach(a => {
+      a.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const id = a.getAttribute('href');
+        smoothJumpTo(id);
+        setLabelActive(id);
+        flashHighlight(id, a);
+      });
+    });
+
+    /* ===== Mobile nav sizing (load-safe) ===== */
+    const mobileNavSection = document.getElementById('mobileNavSection');
+    function updateMobileNavHeight(){ if(!mobileNavSection) return; const h = Math.ceil(mobileNavSection.getBoundingClientRect().height); document.documentElement.style.setProperty('--mobileNavH', h + 'px'); }
+    function onResizeRecalc(){ updateMobileNavHeight(); positionFloatingMenus(); }
+
+    /* ===== Menus ===== */
+    const mobileLeft = document.getElementById('mobileLeft');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const linkMenu = document.getElementById('linkMenu');
+    const mobileRight = document.getElementById('mobileRight');
+
+    // --- Portal helpers ---
+    function ensurePortal(menu){
+      if (!menu) return menu;
+      if (menu.__portaled) return menu;
+      // Move to body so it's always fixed to the viewport
+      document.body.appendChild(menu);
+      menu.__portaled = true;
+      return menu;
+    }
+
+    function positionFloatingMenus(){
+      const bar = document.querySelector('#mobileNavSection .bar');
+      if (!bar) return;
+      const rect = bar.getBoundingClientRect();
+      const left = Math.round(rect.left);
+      const top  = Math.round(rect.bottom + 6);
+    
+      [mobileMenu, linkMenu].forEach(menu=>{
+        if (menu && menu.classList.contains('open')){
+          menu.style.left = left + 'px';
+          menu.style.top  = top  + 'px';
+          menu.style.width = Math.round(rect.width) + 'px';
+        }
+      });
+    }
+
+    // --- Left (sections) menu ---
+    function openMenu(){
+      if(!mobileMenu || !mobileLeft) return;
+      closeLinksMenu();
+      ensurePortal(mobileMenu);
+      mobileMenu.classList.add('open','floating');
+      mobileLeft.setAttribute('aria-expanded','true');
+      mobileMenu.setAttribute('aria-hidden','false');
+      positionFloatingMenus();
+      window.addEventListener('scroll', positionFloatingMenus, { passive:true });
+      window.addEventListener('resize', positionFloatingMenus);
+      document.addEventListener('click', onOutsideClick);
+    }
+
+    function closeMenu(){
+      if(!mobileMenu || !mobileLeft) return;
+      mobileMenu.classList.remove('open');
+      mobileLeft.setAttribute('aria-expanded','false');
+      mobileMenu.setAttribute('aria-hidden','true');
+      window.removeEventListener('scroll', positionFloatingMenus);
+      window.removeEventListener('resize', positionFloatingMenus);
+      document.removeEventListener('click', onOutsideClick);
+    }
+
+    // --- Right (links) menu ---
+    function openLinksMenu(){
+      if(!linkMenu || !mobileRight) return;
+      closeMenu();
+      ensurePortal(linkMenu);
+      linkMenu.classList.add('open','floating');
+      mobileRight.setAttribute('aria-expanded','true');
+      linkMenu.setAttribute('aria-hidden','false');
+      positionFloatingMenus();
+      window.addEventListener('scroll', positionFloatingMenus, { passive:true });
+      window.addEventListener('resize', positionFloatingMenus);
+      document.addEventListener('click', onOutsideClick);
+    }
+
+    function closeLinksMenu(){
+      if(!linkMenu || !mobileRight) return;
+      linkMenu.classList.remove('open');
+      mobileRight.setAttribute('aria-expanded','false');
+      linkMenu.setAttribute('aria-hidden','true');
+      window.removeEventListener('scroll', positionFloatingMenus);
+      window.removeEventListener('resize', positionFloatingMenus);
+      document.removeEventListener('click', onOutsideClick);
+    }
+    function onOutsideClick(ev){ const withinMenu = ev.target.closest('#mobileMenu, #linkMenu'); const withinButtons = ev.target.closest('#mobileNavSection #mobileLeft, #mobileNavSection #mobileRight'); if(!withinMenu && !withinButtons){ closeMenu(); closeLinksMenu(); } }
+
+    mobileLeft?.addEventListener('click', (e)=>{ e.stopPropagation(); (mobileMenu?.classList.contains('open') ? closeMenu() : openMenu()); });
+    mobileLeft?.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); (mobileMenu?.classList.contains('open') ? closeMenu() : openMenu()); }});
+    mobileRight?.addEventListener('click', (e)=>{ e.stopPropagation(); (linkMenu?.classList.contains('open') ? closeLinksMenu() : openLinksMenu()); });
+    mobileRight?.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); (linkMenu?.classList.contains('open') ? closeLinksMenu() : openLinksMenu()); }});
+    mobileMenu?.addEventListener('click', (e)=>{
+      //const a = e.target.closest('a');
+      //if(!a) return;
+      //e.preventDefault();
+      //const id = a.getAttribute('href');
+      closeMenu();
+      //setActive(id);
+      //flashHighlight(id, null);
+      //smoothJumpTo(id);
+    });
+    linkMenu?.addEventListener('click', ()=>{ closeLinksMenu(); });
+
+    /* ===== Mode wiring (hide rail on mobile) ===== */
+    const mql = window.matchMedia('(max-width:980px)');
+    function applyNavMode(){
+      if (mql.matches){
+        document.body.classList.add('show-mobile-nav');
+        updateMobileNavHeight();
+        window.addEventListener('resize', onResizeRecalc, { passive:true });
+        window.addEventListener('orientationchange', onResizeRecalc);
+      } else {
+        document.body.classList.remove('show-mobile-nav');
+        document.documentElement.style.setProperty('--mobileNavH','0px');
+        window.removeEventListener('resize', onResizeRecalc);
+        window.removeEventListener('orientationchange', onResizeRecalc);
+      }
+    }
+    mql.addEventListener ? mql.addEventListener('change', applyNavMode) : mql.addListener(applyNavMode);
+
+    /* Init */
+    if(currentSec) currentSec.textContent = 'Menu';
+    applyNavMode();
+
+    /* Ensure calculations after full load (images/fonts) */
+    function runLoadSafeRecalc(){
+      onResizeRecalc();
+      requestAnimationFrame(onResizeRecalc);
+      setTimeout(onResizeRecalc, 60);
+      setTimeout(onResizeRecalc, 180);
+      document.querySelectorAll('img').forEach(img=>{
+        if(!img.complete){ img.addEventListener('load', onResizeRecalc, { once:true }); img.addEventListener('error', onResizeRecalc, { once:true }); }
+      });
+      try{ if('ResizeObserver' in window){ const ro = new ResizeObserver(()=> updateMobileNavHeight()); const bar = document.querySelector('#mobileNavSection .bar'); if(bar) ro.observe(bar); } }catch{}
+    }
+    if (document.readyState === 'complete') runLoadSafeRecalc();
+    else { window.addEventListener('load', runLoadSafeRecalc, { once:true }); document.addEventListener('DOMContentLoaded', ()=> requestAnimationFrame(onResizeRecalc)); }
+  })();
+  </script>
+
+  <!-- Projects accordion -->
+  <script>
+  (function(){
+    const grid = document.getElementById('projectsGrid');
+    if(!grid) return;
+    function setAria(card, expanded){ card.setAttribute('aria-expanded', expanded ? 'true' : 'false'); }
+    function expandDetails(d){ d.style.display = 'block'; d.style.height = 'auto'; const h = d.scrollHeight; d.style.height = '0px'; d.style.opacity = '0'; requestAnimationFrame(()=>{ d.style.height = h + 'px'; d.style.opacity = '1'; }); d.addEventListener('transitionend', function onEnd(e){ if(e.propertyName !== 'height') return; d.removeEventListener('transitionend', onEnd); d.style.height = 'auto'; }); }
+    function collapseDetails(d){ if(getComputedStyle(d).display === 'none') return; const h = d.scrollHeight; d.style.height = h + 'px'; requestAnimationFrame(()=>{ d.style.height = '0px'; d.style.opacity = '0'; }); d.addEventListener('transitionend', function onEnd(e){ if(e.propertyName !== 'height') return; d.removeEventListener('transitionend', onEnd); d.style.display = 'none'; }); }
+    function toggle(card){ const d = card.querySelector('.details'); if(!d) return; const isOpen = card.classList.toggle('expanded'); setAria(card, isOpen); if(isOpen){ expandDetails(d); } else { collapseDetails(d); } }
+    grid.addEventListener('click', (e)=>{ const card = e.target.closest('.proj'); if(!card || !grid.contains(card)) return; toggle(card); });
+  })();
+  </script>
+
+  <!-- Optional tests -->
+  <script>
+  (function(){
+    const params = new URLSearchParams(location.search);
+    if(params.get('test_click_flash_ephemeral')==='1'){
+      try{ const a = document.querySelector('#railNav a[href="#about"]'); a?.click(); setTimeout(()=>{ console.assert(!a?.classList.contains('flash') && !a?.classList.contains('active'), 'flash/active should clear'); console.log('[TEST_CLICK_FLASH_EPHEMERAL] ok'); }, 1700); }catch(e){ console.error('[TEST_CLICK_FLASH_EPHEMERAL]', e); }
+    }
+    if(params.get('test_mobile_nav_zero_jitter')==='1'){
+      try{
+        const bar = document.querySelector('#mobileNavSection .bar');
+        if(window.matchMedia('(max-width:980px)').matches && bar){
+          const l1 = Math.round(bar.getBoundingClientRect().left);
+          window.scrollTo(0, (window.scrollY||0) + 200);
+          setTimeout(()=>{
+            const l2 = Math.round(bar.getBoundingClientRect().left);
+            console.assert(l1 === l2, 'bar should not shift horizontally');
+            console.log('[TEST_MOBILE_ZERO_JITTER] left:', l1, '->', l2);
+          }, 250);
+        }
+      }catch(e){ console.error('[TEST_MOBILE_ZERO_JITTER] error', e); }
+    }
+  })();
+  </script>
+</body>
+</html>
