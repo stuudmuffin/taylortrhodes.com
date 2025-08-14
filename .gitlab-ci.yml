@@ -63,17 +63,30 @@ Deploy DO VM:
         exit 1
       fi
   script:
+    - chmod 600 "$SSH_KEY"
     - ssh-keygen -lf "$SSH_KEY" || true
-    - chmod 600 $SSH_KEY
     - |
-      ssh -o BatchMode=yes -i "$SSH_KEY" -tt -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" '
-        set -e
-        docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-        docker pull "$CONTAINER_BRANCH_IMAGE"
-        docker stop taylortrhodes.com || true
-        docker rm   taylortrhodes.com || true
-        docker run --name=taylortrhodes.com -p 8085:8080 --restart=always -d "$CONTAINER_BRANCH_IMAGE"
-      '
+      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_BRANCH_IMAGE=$CONTAINER_BRANCH_IMAGE bash -s" <<'EOSSH'
+      set -euo pipefail
+  
+      # sanity checks
+      : "${CI_REGISTRY:?missing}"
+      : "${CI_REGISTRY_USER:?missing}"
+      : "${CI_REGISTRY_PASSWORD:?missing}"
+      : "${CONTAINER_BRANCH_IMAGE:?missing}"
+  
+      # login to GitLab Container Registry (NOT Docker Hub)
+      echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  
+      # pull first; only stop/replace on successful pull
+      docker pull "$CONTAINER_BRANCH_IMAGE"
+  
+      docker stop taylortrhodes.com 2>/dev/null || true
+      docker rm   taylortrhodes.com 2>/dev/null || true
+  
+      # NOTE: adjust right side of -p if your container listens on 80 vs 8080
+      docker run --name taylortrhodes.com -p 8085:8080 --restart=always -d "$CONTAINER_BRANCH_IMAGE"
+      EOSSH
   after_script:
     - |
       # remove the allow rule (idempotent)
