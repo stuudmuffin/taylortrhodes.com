@@ -1,15 +1,13 @@
-image: docker:19.03.13
+image: docker:26.1.4
 
 services:
-    - docker:19.03.13-dind
+    - docker:26.1.4-dind
 
 variables:
     SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
     DOCKER_REGISTRY: $CI_REGISTRY/$CI_PROJECT_PATH
     CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
     LOCAL_BUILD_PATH: "src/"
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
 
 stages:
     - build
@@ -38,6 +36,7 @@ Build Image:
 
 Deploy DO VM:
   stage: deploy
+  image: alpine:3.20
   variables:
     DO_API: "https://api.digitalocean.com/v2"
     SSH_PORT: "22"
@@ -92,7 +91,7 @@ Deploy DO VM:
 
 Deploy S3:
   stage: deploy_s3
-  image: registry.gitlab.com/studmuffin/taylortrhodes.com
+  image: amazon/aws-cli:2.17.19
   needs: []
   when: always
   script:
