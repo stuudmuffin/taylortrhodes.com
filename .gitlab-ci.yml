@@ -63,10 +63,10 @@ Deploy DO VM:
         exit 1
       fi
   script:
-    - cp $SSH_KEY ./ssh_key
-    - chmod 600 ./ssh_key
+    - ssh-keygen -lf "$SSH_KEY" || true
+    - chmod 600 $SSH_KEY
     - |
-      ssh -o BatchMode=yes -i "./ssh_key" -tt -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" '
+      ssh -o BatchMode=yes -i "$SSH_KEY" -tt -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" '
         set -e
         docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
         docker pull "$CONTAINER_BRANCH_IMAGE"
