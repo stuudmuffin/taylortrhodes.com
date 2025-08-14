@@ -9,7 +9,7 @@
     /* ====== Design tokens ====== */
     :root{
       --bg:#0b0d10; --card:#14171c; --nav:#1d2229; --ink:#dfe8f1; --muted:#92a0b3;
-      --brand:#64b5f6; --accent:#a78bfa; --ring:#64b5f680; --radius:16px;
+      --brand:#64b5f6; --accent:#a78bfa; --ring:rgba(100,181,246,0.5); --radius:16px;
       --contentW:980px; --gap:28px; --railW:280px;
       --padInline:24px; --padBlockTop:24px; --padBlockBottom:0px;
       --pad:var(--padBlockTop) var(--padInline) var(--padBlockBottom) var(--padInline);
@@ -20,9 +20,9 @@
       --shadow: 0 5px 15px rgba(0,0,0,.45);
       --glow: 0 0 0 1px rgba(34, 63, 86, 0.18), 0 0 15px rgba(60, 111, 152, 0.18);
     }
-    @media (prefers-color-scheme:light){
+    /*@media (prefers-color-scheme:light){
       :root{ --bg:#f7f8fb; --card:#fff; --ink:#1b2430; --muted:#52607a; --card-active:#f0f3f8; --border-active:rgba(0,0,0,.12); }
-    }
+    }*/
 
     /* ====== Base ====== */
     *{box-sizing:border-box}
@@ -68,6 +68,7 @@
     /* ====== Sections ====== */
     section{scroll-margin-top:108px}
     .card{
+      background-color: var(--card);
       background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
       border: 1px solid rgba(148,163,184,.18);
       border-radius: var(--radius);
@@ -79,6 +80,17 @@
       padding:22px;
       transition:background .2s ease, border-color .2s ease
     }
+    @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
+      .card{
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        /* drop the flimsy gradient if blur is unavailable */
+        background: none;
+        background-color: var(--card);
+        box-shadow: var(--shadow); /* keep depth */
+      }
+    }
+
     .flash{ animation: flash 1.5s ease-out 1; }
     @keyframes flash{
       0% { 
@@ -181,7 +193,7 @@
     body.show-mobile-nav .container{ max-width:calc(var(--contentW) + var(--pad2)) }
 
     /* Prevent rail flash on initial mobile load */
-    @media (max-width:980px){ :root{ --railCol:0px; --gap:0px; --totalW:var(--contentW) } .grid{ gap:0 } .container{ max-width:calc(var(--contentW) + var(--pad2)) } .rail{ opacity:0; pointer-events:none } }
+    @media (max-width:980px){ :root{ color-scheme: dark light; --railCol:0px; --gap:0px; --totalW:var(--contentW) } .grid{ gap:0 } .container{ max-width:calc(var(--contentW) + var(--pad2)) } .rail{ opacity:0; pointer-events:none } }
   </style>
 </head>
 <body>
