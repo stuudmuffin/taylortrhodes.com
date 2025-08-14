@@ -63,12 +63,10 @@ Deploy DO VM:
         exit 1
       fi
   script:
-    - head -n2 "$SSH_KEY" || true         # should show "-----BEGIN OPENSSH PRIVATE KEY-----"
-    - ssh -V                              # ensure you’re using OpenSSH, not dropbear
-    - ls -l "$SSH_KEY" && file "$SSH_KEY"
-    - chmod 600 "$SSH_KEY"
+    - cp $SSH_KEY ./ssh_key
+    - chmod 600 ./ssh_key
     - |
-      ssh -o BatchMode=yes -i "$SSH_KEY" -tt -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" '
+      ssh -o BatchMode=yes -i "./ssh_key" -tt -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" '
         set -e
         docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
         docker pull "$CONTAINER_BRANCH_IMAGE"
@@ -108,12 +106,12 @@ Deploy S3:
       set -euo pipefail
 
       # Sync HTML with no-cache for instant updates
-      aws s3 sync site/ "s3://$S3_BUCKET/" \
+      aws s3 sync src/ "s3://$S3_BUCKET/" \
         --exclude "assets/*" --delete \
         --cache-control "no-cache" --exact-timestamps --no-progress
 
       # Sync versioned/static assets with long cache
-      aws s3 sync site/assets/ "s3://$S3_BUCKET/assets/" \
+      aws s3 sync src/assets/ "s3://$S3_BUCKET/assets/" \
         --delete \
         --cache-control "public,max-age=31536000,immutable" \
         --exact-timestamps --no-progress
