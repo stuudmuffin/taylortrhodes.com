@@ -1,8 +1,5 @@
 image: docker:26.1.4
 
-services:
-    - docker:26.1.4-dind
-
 variables:
     SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
     DOCKER_REGISTRY: $CI_REGISTRY/$CI_PROJECT_PATH
@@ -40,7 +37,7 @@ Deploy DO VM:
   variables:
     DO_API: "https://api.digitalocean.com/v2"
     SSH_PORT: "22"
-    TARGET_HOST: "taylortrhodes.com"
+    TARGET_HOST: $DO_VM_IP
     SSH_USER: "root"
   before_script:
     - |
@@ -100,6 +97,17 @@ Deploy S3:
     AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
     AWS_REGION: $AWS_REGION
   script:
-    - aws s3 rm s3://${S3_BUCKET_NAME} --recursive
-    - aws s3 cp ${LOCAL_BUILD_PATH} s3://${S3_BUCKET_NAME} --recursive
+    - |
+      set -euo pipefail
+
+      # Sync HTML with no-cache for instant updates
+      aws s3 sync site/ "s3://$S3_BUCKET/" \
+        --exclude "assets/*" --delete \
+        --cache-control "no-cache" --exact-timestamps --no-progress
+
+      # Sync versioned/static assets with long cache
+      aws s3 sync site/assets/ "s3://$S3_BUCKET/assets/" \
+        --delete \
+        --cache-control "public,max-age=31536000,immutable" \
+        --exact-timestamps --no-progress
     
