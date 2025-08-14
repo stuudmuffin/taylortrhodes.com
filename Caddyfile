@@ -1,0 +1,33 @@
+:8080 {
+    root * /srv
+    file_server
+    encode zstd gzip
+
+    # Cache static assets aggressively (hashed filenames recommended)
+    @immutable path *.css *.js *.png *.jpg *.jpeg *.svg *.webp *.ico *.woff2
+    header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+    # Security headers (tune CSP as needed)
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        X-Frame-Options "DENY"
+        Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self';"
+    }
+
+    # Health endpoint
+    @health path /health
+    respond @health "ok" 200
+
+    # SPA fallback (remove if not needed)
+    @spa {
+        not path *.css *.js *.png *.jpg *.jpeg *.svg *.webp *.ico *.woff2 *.txt
+    }
+    rewrite @spa /index.html
+
+    log {
+        output stdout
+        format console
+    }
+}

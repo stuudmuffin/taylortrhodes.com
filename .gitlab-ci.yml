@@ -36,17 +36,59 @@ Build Image:
     paths:
     - src
 
-Deploy Site:
+Deploy DO VM:
   stage: deploy
-  when: on_success
+  variables:
+    DO_API: "https://api.digitalocean.com/v2"
+    SSH_PORT: "22"
+    TARGET_HOST: "taylortrhodes.com"
+    SSH_USER: "root"
+  before_script:
+    - |
+      set -euo pipefail
+      # discover this job's egress IP
+      JOB_IP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\n')"
+      echo "Job egress IP: $JOB_IP"
+      echo "$JOB_IP" > .allowlisted_ip
+
+      # allow SSH from this job's /32
+      ADD_PAYLOAD='{"inbound_rules":[{"protocol":"tcp","ports":"'"$SSH_PORT"'","sources":{"addresses":["'"$JOB_IP"'/32"]}}]}'
+      ADD_CODE=$(curl -sS -o /tmp/do_add.json -w "%{http_code}" \
+        -X POST "$DO_API/firewalls/$DO_FIREWALL_ID/rules" \
+        -H "Authorization: Bearer $DO_TOKEN" \
+        -H "Content-Type: application/json" \
+        --data "$ADD_PAYLOAD")
+      echo "DO add status: $ADD_CODE"
+      if [ "$ADD_CODE" != "204" ] && [ "$ADD_CODE" != "200" ]; then
+        cat /tmp/do_add.json
+        exit 1
+      fi
   script:
-    - chmod 600 ${SSH_KEY}
-    - ssh -i ${SSH_KEY} -tt -o StrictHostKeyChecking=no root@taylortrhodes.com \
-      "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
-      docker pull $CONTAINER_BRANCH_IMAGE &&
-      docker stop taylortrhodes.com || true &&
-      docker rm taylortrhodes.com || true &&
-      docker run --name=taylortrhodes.com -p 8085:80 --restart=always -d $CONTAINER_BRANCH_IMAGE"
+    - chmod 600 "$SSH_KEY"
+    - |
+      ssh -i "$SSH_KEY" -tt -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" '
+        set -e
+        docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+        docker pull "$CONTAINER_BRANCH_IMAGE"
+        docker stop taylortrhodes.com || true
+        docker rm   taylortrhodes.com || true
+        docker run --name=taylortrhodes.com -p 8085:8080 --restart=always -d "$CONTAINER_BRANCH_IMAGE"
+      '
+  after_script:
+    - |
+      # remove the allow rule (idempotent)
+      if [ -f .allowlisted_ip ]; then
+        JOB_IP="$(cat .allowlisted_ip)"
+        DEL_PAYLOAD='{"inbound_rules":[{"protocol":"tcp","ports":"'"$SSH_PORT"'","sources":{"addresses":["'"$JOB_IP"'/32"]}}]}'
+        DEL_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+          -X DELETE "$DO_API/firewalls/$DO_FIREWALL_ID/rules" \
+          -H "Authorization: Bearer $DO_TOKEN" \
+          -H "Content-Type: application/json" \
+          --data "$DEL_PAYLOAD")
+        echo "DO delete status: $DEL_CODE"
+      fi
+  when: on_success
+  timeout: 20 minutes
 
 Deploy S3:
   stage: deploy_s3
