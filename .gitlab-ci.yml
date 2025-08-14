@@ -63,9 +63,12 @@ Deploy DO VM:
         exit 1
       fi
   script:
+    - head -n2 "$SSH_KEY" || true         # should show "-----BEGIN OPENSSH PRIVATE KEY-----"
+    - ssh -V                              # ensure you’re using OpenSSH, not dropbear
+    - ls -l "$SSH_KEY" && file "$SSH_KEY"
     - chmod 600 "$SSH_KEY"
     - |
-      ssh -i "$SSH_KEY" -tt -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" '
+      ssh -o BatchMode=yes -i "$SSH_KEY" -tt -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" '
         set -e
         docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
         docker pull "$CONTAINER_BRANCH_IMAGE"
