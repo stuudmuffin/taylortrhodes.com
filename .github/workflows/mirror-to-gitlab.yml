@@ -1,0 +1,43 @@
+name: Mirror to GitLab
+
+on:
+  push:
+  create:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'  # Fetch all history for all tags and branches
+
+      - name: Mirror branch to GitLab
+        if: github.ref_type != 'tag'
+        env:
+            GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }} #this can be a gitlab project token, instead of a personal token. example: https://gitlab.com/hoverstate/jazz/mywav-dsp/-/settings/access_tokens
+            GITLAB_URL: ${{ vars.GITLAB_URL }} # should NOT include https. example: gitlab.com/hoverstate/jazz/mywav-dsp.git
+        run: |
+          git remote add gitlab https://oauth2:${GITLAB_ACCESS_TOKEN}@${GITLAB_URL}
+          for branch in $(git branch -l | sed 's/\*//g' | awk '{$1=$1};1'); do
+            echo pushing branch ${branch}
+            git push --force gitlab "${branch}:refs/heads/${branch}"
+          done
+
+      - name: Mirror tag to GitLab
+        if: github.ref_type == 'tag'
+        env:
+          GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
+          GITLAB_URL: ${{ vars.GITLAB_URL }}  # Assuming you've stored the GitLab URL in secrets as well
+        run: |
+          git remote add gitlab https://oauth2:${GITLAB_ACCESS_TOKEN}@${GITLAB_URL}
+
+          # Check if tag already exists in GitLab
+          if git ls-remote --tags gitlab | grep -q "refs/tags/${GITHUB_REF_NAME}$"; then
+            echo "Tag ${GITHUB_REF_NAME} already exists in GitLab. Skipping push."
+            exit 0
+          fi
+
+          echo pushing tag ${GITHUB_REF_NAME}
+          git push gitlab "${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
