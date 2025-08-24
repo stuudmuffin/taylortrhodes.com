@@ -70,26 +70,32 @@ Deploy DO VM:
       set -euo pipefail
   
       # sanity checks
+      echo checking varaibles
       : "${CI_REGISTRY:?missing}"
       : "${CI_REGISTRY_USER:?missing}"
       : "${CI_REGISTRY_PASSWORD:?missing}"
       : "${CONTAINER_BRANCH_IMAGE:?missing}"
   
       # login to GitLab Container Registry (NOT Docker Hub)
+      echo logging in to gitlab docker registry
       echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
   
       # pull first; only stop/replace on successful pull
+      echo pull image from registry
       docker pull "$CONTAINER_BRANCH_IMAGE"
   
+      echo stopping and removing old container
       docker stop taylortrhodes.com 2>/dev/null || true
       docker rm   taylortrhodes.com 2>/dev/null || true
   
       # NOTE: adjust right side of -p if your container listens on 80 vs 8080
+      echo starting new container
       docker run --name taylortrhodes.com -p 8085:8080 --restart=always -d "$CONTAINER_BRANCH_IMAGE"
       EOSSH
   after_script:
     - |
       # remove the allow rule (idempotent)
+      echo cleaning up run environment
       if [ -f .allowlisted_ip ]; then
         JOB_IP="$(cat .allowlisted_ip)"
         DEL_PAYLOAD='{"inbound_rules":[{"protocol":"tcp","ports":"'"$SSH_PORT"'","sources":{"addresses":["'"$JOB_IP"'/32"]}}]}'
@@ -103,29 +109,28 @@ Deploy DO VM:
   when: on_success
   timeout: 20 minutes
 
-Deploy S3:
-  stage: deploy_s3
-  image:
-    name: amazon/aws-cli:2.17.19
-    entrypoint: [""]
-  needs: []
-  when: always
-  variables:
-    AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
-    AWS_REGION: $AWS_REGION
-  script:
-    - |
-      set -euo pipefail
-
-      # Sync HTML with no-cache for instant updates
-      aws s3 sync src/ "s3://$S3_BUCKET/" \
-        --exclude "assets/*" --delete \
-        --cache-control "no-cache" --exact-timestamps --no-progress
-
-      # Sync versioned/static assets with long cache
-      aws s3 sync src/assets/ "s3://$S3_BUCKET/assets/" \
-        --delete \
-        --cache-control "public,max-age=31536000,immutable" \
-        --exact-timestamps --no-progress
-    
+#Deploy S3:
+#  stage: deploy_s3
+#  image:
+#    name: amazon/aws-cli:2.17.19
+#    entrypoint: [""]
+#  needs: []
+#  when: always
+#  variables:
+#    AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+#    AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+#    AWS_REGION: $AWS_REGION
+#  script:
+#    - |
+#      set -euo pipefail
+#
+#      # Sync HTML with no-cache for instant updates
+#      aws s3 sync src/ "s3://$S3_BUCKET/" \
+#        --exclude "assets/*" --delete \
+#        --cache-control "no-cache" --exact-timestamps --no-progress
+#
+#      # Sync versioned/static assets with long cache
+#      aws s3 sync src/assets/ "s3://$S3_BUCKET/assets/" \
+#        --delete \
+#        --cache-control "public,max-age=31536000,immutable" \
+#        --exact-timestamps --no-progress
