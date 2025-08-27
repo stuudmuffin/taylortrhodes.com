@@ -39,9 +39,10 @@ Deploy DO VM:
     SSH_PORT: "22"
     TARGET_HOST: $DO_VM_IP
     SSH_USER: "root"
-  #before_script:
-  #  - |
-  #    set -euo pipefail
+  before_script:
+    - |
+      set -euo pipefail
+      apk add --no-cache openssh-client bash
   #    apk add --no-cache openssh-client curl bash busybox-extras jq
   #    # discover this job's egress IP
   #    JOB_IP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\n')"
