@@ -19,6 +19,8 @@ Build Image:
         - Dockerfile
         - Caddyfile
     - when: manual 
+  services:
+    - docker:28.3.3-dind
   before_script:
     - echo $CI_REGISTRY
     - echo $CI_PROJECT_PATH
@@ -38,7 +40,9 @@ Build Image:
 
 Deploy DO VM:
   stage: deploy
-  image: alpine:3.20
+  image: alpine:3.22
+  tags:
+    - homelab
   when: on_success
   variables:
     DO_API: "https://api.digitalocean.com/v2"
