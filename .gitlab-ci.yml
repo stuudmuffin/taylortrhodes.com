@@ -13,7 +13,12 @@ stages:
 
 Build Image:
   stage: build
-  when: always
+  rules:
+    - changes: # run automatically if any of these change
+        - src/**/*
+        - Dockerfile
+        - Caddyfile
+    - when: manual 
   before_script:
     - echo $CI_REGISTRY
     - echo $CI_PROJECT_PATH
@@ -21,12 +26,12 @@ Build Image:
     - echo $CONTAINER_BRANCH_IMAGE
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    # will build versioning someday.
-    #- VERSION_NUMBER=1.0.0
-    #- CONTAINER_VERSION_IMAGE=$DOCKER_REGISTRY:v${VERSION_NUMBER}
+    - echo "BUILD_REF=$CI_COMMIT_REF_NAME" > src/buildinfo.txt
+    - echo "BUILD_SHA=$CI_COMMIT_SHORT_SHA" >> src/buildinfo.txt
+    - echo "BUILD_TAG=$CI_COMMIT_TAG" >> src/buildinfo.txt
     - docker build --network host -t $CONTAINER_BRANCH_IMAGE .
     - docker push $CONTAINER_BRANCH_IMAGE
-    #- docker system prune -af --filter "until=$((30*24))h" # don't think this is needed for when using kuberentes runners
+    #- docker system prune -af --filter "until=$((30*24))h"
   artifacts:
     paths:
     - src
