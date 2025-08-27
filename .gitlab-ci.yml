@@ -1,4 +1,4 @@
-image: docker:26.1.4
+image: docker:28.3.3
 
 variables:
     SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
