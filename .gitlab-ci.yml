@@ -39,27 +39,27 @@ Deploy DO VM:
     SSH_PORT: "22"
     TARGET_HOST: $DO_VM_IP
     SSH_USER: "root"
-  before_script:
-    - |
-      set -euo pipefail
-      apk add --no-cache openssh-client curl bash busybox-extras jq
-      # discover this job's egress IP
-      JOB_IP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\n')"
-      echo "Job egress IP: $JOB_IP"
-      echo "$JOB_IP" > .allowlisted_ip
-
-      # allow SSH from this job's /32
-      ADD_PAYLOAD='{"inbound_rules":[{"protocol":"tcp","ports":"'"$SSH_PORT"'","sources":{"addresses":["'"$JOB_IP"'/32"]}}]}'
-      ADD_CODE=$(curl -sS -o /tmp/do_add.json -w "%{http_code}" \
-        -X POST "$DO_API/firewalls/$DO_FIREWALL_ID/rules" \
-        -H "Authorization: Bearer $DO_TOKEN" \
-        -H "Content-Type: application/json" \
-        --data "$ADD_PAYLOAD")
-      echo "DO add status: $ADD_CODE"
-      if [ "$ADD_CODE" != "204" ] && [ "$ADD_CODE" != "200" ]; then
-        cat /tmp/do_add.json
-        exit 1
-      fi
+  #before_script:
+  #  - |
+  #    set -euo pipefail
+  #    apk add --no-cache openssh-client curl bash busybox-extras jq
+  #    # discover this job's egress IP
+  #    JOB_IP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\n')"
+  #    echo "Job egress IP: $JOB_IP"
+  #    echo "$JOB_IP" > .allowlisted_ip
+#
+  #    # allow SSH from this job's /32
+  #    ADD_PAYLOAD='{"inbound_rules":[{"protocol":"tcp","ports":"'"$SSH_PORT"'","sources":{"addresses":["'"$JOB_IP"'/32"]}}]}'
+  #    ADD_CODE=$(curl -sS -o /tmp/do_add.json -w "%{http_code}" \
+  #      -X POST "$DO_API/firewalls/$DO_FIREWALL_ID/rules" \
+  #      -H "Authorization: Bearer $DO_TOKEN" \
+  #      -H "Content-Type: application/json" \
+  #      --data "$ADD_PAYLOAD")
+  #    echo "DO add status: $ADD_CODE"
+  #    if [ "$ADD_CODE" != "204" ] && [ "$ADD_CODE" != "200" ]; then
+  #      cat /tmp/do_add.json
+  #      exit 1
+  #    fi
   script:
     - chmod 600 "$SSH_KEY"
     - ssh-keygen -lf "$SSH_KEY" || true
@@ -90,22 +90,22 @@ Deploy DO VM:
       echo starting new container
       docker run --name taylortrhodes.com -p 8085:8080 --restart=always -d "$CONTAINER_BRANCH_IMAGE"
       EOSSH
-  after_script:
-    - |
-      # remove the allow rule (idempotent)
-      echo cleaning up run environment
-      if [ -f .allowlisted_ip ]; then
-        JOB_IP="$(cat .allowlisted_ip)"
-        DEL_PAYLOAD='{"inbound_rules":[{"protocol":"tcp","ports":"'"$SSH_PORT"'","sources":{"addresses":["'"$JOB_IP"'/32"]}}]}'
-        DEL_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
-          -X DELETE "$DO_API/firewalls/$DO_FIREWALL_ID/rules" \
-          -H "Authorization: Bearer $DO_TOKEN" \
-          -H "Content-Type: application/json" \
-          --data "$DEL_PAYLOAD")
-        echo "DO delete status: $DEL_CODE"
-      fi
+  #after_script:
+  #  - |
+  #    # remove the allow rule (idempotent)
+  #    echo cleaning up run environment
+  #    if [ -f .allowlisted_ip ]; then
+  #      JOB_IP="$(cat .allowlisted_ip)"
+  #      DEL_PAYLOAD='{"inbound_rules":[{"protocol":"tcp","ports":"'"$SSH_PORT"'","sources":{"addresses":["'"$JOB_IP"'/32"]}}]}'
+  #      DEL_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+  #        -X DELETE "$DO_API/firewalls/$DO_FIREWALL_ID/rules" \
+  #        -H "Authorization: Bearer $DO_TOKEN" \
+  #        -H "Content-Type: application/json" \
+  #        --data "$DEL_PAYLOAD")
+  #      echo "DO delete status: $DEL_CODE"
+  #    fi
   when: on_success
-  timeout: 20 minutes
+  timeout: 5 minutes
 
 #Deploy S3:
 #  stage: deploy_s3
