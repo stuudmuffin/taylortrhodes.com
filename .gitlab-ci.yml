@@ -39,6 +39,7 @@ Build Image:
 Deploy DO VM:
   stage: deploy
   image: alpine:3.20
+  when: on_success
   variables:
     DO_API: "https://api.digitalocean.com/v2"
     SSH_PORT: "22"
@@ -110,7 +111,6 @@ Deploy DO VM:
   #        --data "$DEL_PAYLOAD")
   #      echo "DO delete status: $DEL_CODE"
   #    fi
-  when: on_success
   timeout: 5 minutes
 
 #Deploy S3:
