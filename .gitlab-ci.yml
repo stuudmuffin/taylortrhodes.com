@@ -41,6 +41,7 @@ Build Image:
 Deploy Dev Instance:
   stage: deploy
   image: alpine:3.22
+  needs: []
   environment: 
     name: dev
     url: https://dev.taylortrhodes.com
@@ -48,7 +49,7 @@ Deploy Dev Instance:
     - homelab
   rules:
     - if: '$CI_COMMIT_BRANCH == "dev"'
-      when: manual
+      when: on_success
       allow_failure: false
     - if: '$CI_COMMIT_BRANCH == "dev"'
       when: manual
@@ -67,11 +68,14 @@ Deploy Dev Instance:
       set -euo pipefail
       apk add --no-cache openssh-client bash
   script:
-    - chmod 600 "$SSH_KEY"
-    - head -n 2 $SSH_KEY
-    - ssh-keygen -lf "$SSH_KEY" || true
+    - echo "$SSH_KEY" > ./ssh_key
+    - chmod 600 "./ssh_key"
+    - head -n 2 ./ssh_key
+    - ls -l "$SSH_KEY"
+    - file "$SSH_KEY"
+    - ssh-keygen -lf "./ssh_key" || true
     - |
-      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_BRANCH_IMAGE=$CONTAINER_BRANCH_IMAGE bash -s" <<'EOSSH'
+      ssh -i "./ssh_key" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_BRANCH_IMAGE=$CONTAINER_BRANCH_IMAGE bash -s" <<'EOSSH'
       set -euo pipefail
   
       # sanity checks
