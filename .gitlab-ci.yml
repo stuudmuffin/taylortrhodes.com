@@ -48,9 +48,11 @@ Deploy Dev Instance:
     - homelab
   rules:
     - if: '$CI_COMMIT_BRANCH == "dev"'
-      when: on_success
+      when: manual
+      allow_failure: false
     - if: '$CI_COMMIT_BRANCH == "dev"'
       when: manual
+      allow_failure: true
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\//'
