@@ -69,8 +69,7 @@ Deploy Dev Instance:
     - head -n 2 ./ssh_key
     - ls -l "$SSH_KEY"
     - file "$SSH_KEY"
-    - which ssh-keygen
-    - ssh-keygen -V || ssh-keygen -V
+    - od -c ./ssh_key | head -20
     - ssh-keygen -lf ./ssh_key || true
     - |
       ssh -i ./ssh_key -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_BRANCH_IMAGE=$CONTAINER_BRANCH_IMAGE bash -s" <<'EOSSH'
