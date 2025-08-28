@@ -53,7 +53,7 @@ Deploy Dev Instance:
       when: manual
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\//'
       when: on_success
-    - when: never
+    - when: manual
   variables:
     SSH_PORT: "22"
     TARGET_HOST: $SSH_IP
@@ -64,7 +64,7 @@ Deploy Dev Instance:
       apk add --no-cache openssh-client bash
   script:
     - chmod 600 "$SSH_KEY"
-    - head -n 2 key
+    - head -n 2 $SSH_KEY
     - ssh-keygen -lf "$SSH_KEY" || true
     - |
       ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_BRANCH_IMAGE=$CONTAINER_BRANCH_IMAGE bash -s" <<'EOSSH'
