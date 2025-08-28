@@ -18,6 +18,7 @@ Build Image:
         - src/**/*
         - Dockerfile
         - Caddyfile
+        - gitlab-ci.yml
     - when: manual 
   services:
     - docker:28.3.3-dind
