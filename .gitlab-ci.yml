@@ -41,7 +41,6 @@ Build Image:
 Deploy Dev Instance:
   stage: deploy
   image: alpine:3.22
-  needs: []
   environment: 
     name: dev
     url: https://dev.taylortrhodes.com
