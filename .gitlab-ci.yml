@@ -64,13 +64,8 @@ Deploy Dev Instance:
       set -euo pipefail
       apk add --no-cache openssh-client bash file
   script:
-    - cp "$SSH_KEY" ./ssh_key
-    - chmod 600 ./ssh_key
-    - head -n 2 ./ssh_key
-    - ls -l "$SSH_KEY"
-    - file "$SSH_KEY"
-    - od -c ./ssh_key | head -20
-    - ssh-keygen -lf ./ssh_key || true
+    - chmod 600 "$SSH_KEY"
+    - ssh-keygen -lf "$SSH_KEY" || true
     - |
       ssh -i ./ssh_key -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_BRANCH_IMAGE=$CONTAINER_BRANCH_IMAGE bash -s" <<'EOSSH'
       set -euo pipefail
