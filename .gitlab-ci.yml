@@ -52,6 +52,7 @@ Deploy Dev Instance:
       when: on_success
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+      allow_failure: true
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\//'
       when: on_success
     - when: never
