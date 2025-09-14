@@ -49,6 +49,8 @@ Deploy Feature Instance:
     name: feature
   tags:
     - homelab
+  variables:
+    PROXY_REDEPLOY: false
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^feature\//'
       changes: # run automatically if any of these change
