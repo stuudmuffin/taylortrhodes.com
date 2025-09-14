@@ -84,7 +84,7 @@ Deploy Feature Instance:
       docker network inspect "\$proxy_net" >/dev/null 2>&1 || docker network create --driver bridge "\$proxy_net"
 
       # update proxy files and restart container
-      cd "\$proxy_path" || { echo creating \$proxy_path && mkdir -p "\$proxy_path" && touch "\$proxy_path/docker-compose.yml" "\$proxy_path/nginx.conf" && cd "\$proxy_path" || exit 1; }
+      mkdir -p "$proxy_path"
       if [[ ! -f "\$proxy_path/.last_sha" || "\$PROXY_REDEPLOY" == "true" ]] || ! docker compose -f "\$proxy_path/docker-compose.yml" ps feature-proxy 2>/dev/null | grep -q "Up"; then
         echo "Updating proxy files and restarting..."
         cat > "\$proxy_path/docker-compose.yml" <<EOF
