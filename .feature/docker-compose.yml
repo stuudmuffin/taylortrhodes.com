@@ -3,6 +3,7 @@ networks:
     external: true
 
 services:
+  feat-taylortrhodes-proxy:
     image: nginx:alpine
     container_name: feat-taylortrhodes-proxy
     ports:
