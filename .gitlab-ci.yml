@@ -82,7 +82,7 @@ Deploy Feature Instance:
       proxy_net=feat-taylortrhodes-proxy-net
 
       # --- Ensure network exists ---
-      docker network inspect $proxy_net" >/dev/null 2>&1 || docker network create --driver bridge "$proxy_net"
+      docker network inspect "$proxy_net" >/dev/null 2>&1 || docker network create --driver bridge "$proxy_net"
 
       # update proxy files and restart container
       mkdir -p "$proxy_path"
