@@ -89,7 +89,7 @@ Deploy Feature Instance:
       if [ "$PROXY_REDEPLOY" == "true" ] || ! docker compose -f "$proxy_path/docker-compose.yml" ps feat-taylortrhodes-proxy 2>/dev/null | grep -q "Up"; then
         echo "Updating proxy files and restarting..."
         # Restart or start proxy
-        docker compose -f "$proxy_path/docker-compose.yml" up -d
+        docker compose -f "$proxy_path/docker-compose.yml" up -d --force-recreate
       fi
 
       # sanity checks
