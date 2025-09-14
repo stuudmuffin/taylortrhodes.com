@@ -28,4 +28,4 @@ server {
 }
 ```
 
-On the feature vm, the feature proxy should try to configure itself automatically as needed.
+On the feature vm, the feature proxy should try to configure itself automatically as needed via ci/cd. As long as the first proxy is pointing here correctly, the feature containers should load.
