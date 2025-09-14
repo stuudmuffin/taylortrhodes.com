@@ -68,7 +68,7 @@ Deploy Feature Instance:
   before_script:
     - |
       set -euo pipefail
-      apk add --no-cache openssh-client bash file
+      apk add --no-cache openssh-client bash file rsync
   script:
     - chmod 600 "$SSH_KEY"
     - ssh-keygen -lf "$SSH_KEY" || true
