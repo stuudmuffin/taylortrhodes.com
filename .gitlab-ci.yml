@@ -46,8 +46,7 @@ Deploy Feature Instance:
   stage: deploy
   image: alpine:3.22
   environment: 
-    name: dev
-    url: https://$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com
+    name: feature
   tags:
     - homelab
   rules:
@@ -81,11 +80,10 @@ Deploy Feature Instance:
       proxy_net=feat-taylortrhodes-proxy-net
 
       # --- Ensure network exists ---
-      docker network inspect "\$proxy_net" >/dev/null 2>&1 || \
-      docker network create --driver bridge "\$proxy_net"
+      docker network inspect "\$proxy_net" >/dev/null 2>&1 || docker network create --driver bridge "\$proxy_net"
 
       # update proxy files and restart container
-      cd "\$proxy_path" || {mkdir -p "\$proxy_path" && touch "\$proxy_path/docker-compose.yml" "\$proxy_path/nginx.conf" && cd "\$proxy_path" || exit 1; }
+      cd "\$proxy_path" || { echo creating \$proxy_path && mkdir -p "\$proxy_path" && touch "\$proxy_path/docker-compose.yml" "\$proxy_path/nginx.conf" && cd "\$proxy_path" || echo nope; }
       if [[ ! -f "\$proxy_path/.last_sha" || "$PROXY_REDEPLOY" == "true" ]] || ! docker compose -f "\$proxy_path/docker-compose.yml" ps feature-proxy 2>/dev/null | grep -q "Up"; then
         echo "Updating proxy files and restarting..."
         cat > "\$proxy_path/docker-compose.yml" <<EOF
@@ -116,6 +114,7 @@ Deploy Feature Instance:
       echo starting new container
       docker run --rm --name \$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com --network "\$proxy_net" -d "\$CONTAINER_COMMIT_IMAGE"
       EOSSH
+    - echo feature is available at https://$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com
   timeout: 8 minutes
 
 Deploy Dev Instance:
