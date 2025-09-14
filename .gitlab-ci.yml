@@ -107,6 +107,10 @@ Deploy Feature Instance:
       echo pull image from registry
       docker pull "$CONTAINER_COMMIT_IMAGE"
 
+      if docker ps -a --format '{{.Names}}' | grep -q "^$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com$"; then
+        docker rm -f "$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com"
+      fi
+
       echo starting new container
       docker run --rm --name $CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com --network "$proxy_net" -d "$CONTAINER_COMMIT_IMAGE"
       EOSSH
