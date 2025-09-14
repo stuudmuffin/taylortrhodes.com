@@ -4,7 +4,7 @@ networks:
 
 services:
     image: nginx:alpine
-    container_name: nginx-feat-proxy
+    container_name: feat-taylortrhodes-proxy
     ports:
       - "8083:80"
     volumes:

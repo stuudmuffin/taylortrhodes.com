@@ -72,8 +72,9 @@ Deploy Feature Instance:
   script:
     - chmod 600 "$SSH_KEY"
     - ssh-keygen -lf "$SSH_KEY" || true
+    - rsync -avz -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" .feature/ "$SSH_USER@$TARGET_HOST:~/docker/feat-taylortrhodes-proxy/"
     - |
-      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_COMMIT_IMAGE=$CONTAINER_COMMIT_IMAGE CI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA PROXY_REDEPLOY=$PROXY_REDEPLOY bash -s" <<EOSSH
+      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_COMMIT_IMAGE=$CONTAINER_COMMIT_IMAGE CI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA PROXY_REDEPLOY=$PROXY_REDEPLOY bash -s" <<'EOSSH'
       set -euo pipefail
 
       # --- Config ---
@@ -81,39 +82,33 @@ Deploy Feature Instance:
       proxy_net=feat-taylortrhodes-proxy-net
 
       # --- Ensure network exists ---
-      docker network inspect "\$proxy_net" >/dev/null 2>&1 || docker network create --driver bridge "\$proxy_net"
+      docker network inspect $proxy_net" >/dev/null 2>&1 || docker network create --driver bridge "$proxy_net"
 
       # update proxy files and restart container
-      mkdir -p "\$proxy_path"
-      if [[ ! -f "\$proxy_path/.last_sha" || "\$PROXY_REDEPLOY" == "true" ]] || ! docker compose -f "\$proxy_path/docker-compose.yml" ps feature-proxy 2>/dev/null | grep -q "Up"; then
+      mkdir -p "$proxy_path"
+      if [ "$PROXY_REDEPLOY" == "true" ] || ! docker compose -f "$proxy_path/docker-compose.yml" ps feat-taylortrhodes-proxy 2>/dev/null | grep -q "Up"; then
         echo "Updating proxy files and restarting..."
-        cat > "\$proxy_path/docker-compose.yml" <<EOF
-      $(< .feature/docker-compose.yml)
-      EOF
-        cat > "\$proxy_path/nginx.conf" <<EOF
-      $(< .feature/nginx.conf)
-      EOF
         # Restart or start proxy
-        docker compose -f "\$proxy_path/docker-compose.yml" up -d
+        docker compose -f "$proxy_path/docker-compose.yml" up -d
       fi
 
       # sanity checks
       echo checking variables
-      : "\${CI_REGISTRY:?missing}"
-      : "\${CI_REGISTRY_USER:?missing}"
-      : "\${CI_REGISTRY_PASSWORD:?missing}"
-      : "\${CONTAINER_COMMIT_IMAGE:?missing}"
+      : "${CI_REGISTRY:?missing}"
+      : "${CI_REGISTRY_USER:?missing}"
+      : "${CI_REGISTRY_PASSWORD:?missing}"
+      : "${CONTAINER_COMMIT_IMAGE:?missing}"
 
       # login to GitLab Container Registry (NOT Docker Hub)
       echo logging in to gitlab docker registry
-      echo "\$CI_REGISTRY_PASSWORD" | docker login "\$CI_REGISTRY" -u "\$CI_REGISTRY_USER" --password-stdin
+      echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
 
       # pull first; only stop/replace on successful pull
       echo pull image from registry
-      docker pull "\$CONTAINER_COMMIT_IMAGE"
+      docker pull "$CONTAINER_COMMIT_IMAGE"
 
       echo starting new container
-      docker run --rm --name \$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com --network "\$proxy_net" -d "\$CONTAINER_COMMIT_IMAGE"
+      docker run --rm --name $CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com --network "$proxy_net" -d "$CONTAINER_COMMIT_IMAGE"
       EOSSH
     - echo feature is available at https://$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com
   timeout: 8 minutes
