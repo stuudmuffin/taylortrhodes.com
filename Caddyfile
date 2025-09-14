@@ -13,7 +13,7 @@
         X-Content-Type-Options "nosniff"
         Referrer-Policy "strict-origin-when-cross-origin"
         X-Frame-Options "DENY"
-        Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' https://*.taylortrhodes.com data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-Zf+5YbAxHMNnOcLO4WC0hLorhn7ScMxXN0AKXp7PzW0=' 'sha256-P3JbOsgSZ+znnXJROC4ZWEl1/IbzlrO3K2xdCa845/c=' 'sha256-NAfuhgw9Gs0sYqxghIxTr5EGXBT0He5aXJsxp3AyFow=' 'sha256-0arktG232vK+8L0mmanZXjPfIQ+LqgSJwREoad0jKEA=' 'sha256-2KMi0wX91CIeaohFevdQ6UKnMq6B4Dq9ccU7aAZR/bU='; connect-src 'self'; form-action 'self'; upgrade-insecure-requests"
+        Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' https://*.taylortrhodes.com data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://cdn.credly.com 'sha256-Zf+5YbAxHMNnOcLO4WC0hLorhn7ScMxXN0AKXp7PzW0=' 'sha256-P3JbOsgSZ+znnXJROC4ZWEl1/IbzlrO3K2xdCa845/c=' 'sha256-NAfuhgw9Gs0sYqxghIxTr5EGXBT0He5aXJsxp3AyFow=' 'sha256-0arktG232vK+8L0mmanZXjPfIQ+LqgSJwREoad0jKEA=' 'sha256-2KMi0wX91CIeaohFevdQ6UKnMq6B4Dq9ccU7aAZR/bU='; connect-src 'self'; form-action 'self'; upgrade-insecure-requests"
 
     }
 
