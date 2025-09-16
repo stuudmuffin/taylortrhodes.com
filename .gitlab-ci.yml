@@ -108,6 +108,7 @@ Deploy Feature Instance:
       docker pull "$CONTAINER_COMMIT_IMAGE"
 
       if docker ps -a --format '{{.Names}}' | grep -q "^$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com$"; then
+        echo removing existing container
         docker rm -f "$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com"
       fi
 
