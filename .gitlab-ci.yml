@@ -1,24 +1,27 @@
 image: docker:28.3.3
 
 variables:
-    SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
-    DOCKER_REGISTRY: $CI_REGISTRY/$CI_PROJECT_PATH
-    CONTAINER_BRANCH_IMAGE: $DOCKER_REGISTRY:latest
-    LOCAL_BUILD_PATH: "src/"
+  SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
+  DOCKER_REGISTRY: $CI_REGISTRY/$CI_PROJECT_PATH
+  CONTAINER_LATEST_IMAGE: $DOCKER_REGISTRY:latest
+  CONTAINER_COMMIT_IMAGE: $DOCKER_REGISTRY:$CI_COMMIT_SHORT_SHA
+  LOCAL_BUILD_PATH: "src/"
 
 stages:
-    - build
-    - deploy
-    - deploy_s3
+  - build
+  - deploy
+  - deploy_s3
 
 Build Image:
   stage: build
   rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^feature\// && $CI_COMMIT_MESSAGE =~ /\[NORUN\]/'
+      when: manual
     - changes: # run automatically if any of these change
-        - src/**/*
-        - Dockerfile
-        - Caddyfile
-        - .gitlab-ci.yml
+      - src/**/*
+      - Dockerfile
+      - Caddyfile
+      - .gitlab-ci.yml
     - when: manual 
   services:
     - docker:28.3.3-dind
@@ -26,18 +29,94 @@ Build Image:
     - echo $CI_REGISTRY
     - echo $CI_PROJECT_PATH
     - echo $DOCKER_REGISTRY
-    - echo $CONTAINER_BRANCH_IMAGE
+    - echo $CONTAINER_COMMIT_IMAGE
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - echo "BUILD_REF=$CI_COMMIT_REF_NAME" > src/buildinfo.txt
     - echo "BUILD_SHA=$CI_COMMIT_SHORT_SHA" >> src/buildinfo.txt
     - echo "BUILD_TAG=$CI_COMMIT_TAG" >> src/buildinfo.txt
-    - docker build --network host -t $CONTAINER_BRANCH_IMAGE .
-    - docker push $CONTAINER_BRANCH_IMAGE
+    - docker build --network host -t $CONTAINER_LATEST_IMAGE -t $CONTAINER_COMMIT_IMAGE .
+    - docker push $DOCKER_REGISTRY --all-tags
     #- docker system prune -af --filter "until=$((30*24))h"
   artifacts:
     paths:
     - src
+
+Deploy Feature Instance:
+  stage: deploy
+  image: alpine:3.22
+  environment: 
+    name: feature
+  tags:
+    - homelab
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^feature\//'
+      changes: # run automatically if any of these change
+        - .feature/*
+      variables:
+        PROXY_REDEPLOY: "true"
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ /^feature\//'
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\//'
+      when: manual
+    - when: never
+  variables:
+    SSH_PORT: "22"
+    TARGET_HOST: $SSH_IP
+    PROXY_REDEPLOY: "false"
+  before_script:
+    - |
+      set -euo pipefail
+      apk add --no-cache openssh-client bash file rsync
+  script:
+    - chmod 600 "$SSH_KEY"
+    - ssh-keygen -lf "$SSH_KEY" || true
+    - rsync -avz -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" .feature/ "$SSH_USER@$TARGET_HOST:~/docker/feat-taylortrhodes-proxy/"
+    - |
+      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_COMMIT_IMAGE=$CONTAINER_COMMIT_IMAGE CI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA PROXY_REDEPLOY=$PROXY_REDEPLOY bash -s" <<'EOSSH'
+      set -euo pipefail
+
+      # --- Config ---
+      proxy_path=~/docker/feat-taylortrhodes-proxy
+      proxy_net=feat-taylortrhodes-proxy-net
+
+      # --- Ensure network exists ---
+      docker network inspect "$proxy_net" >/dev/null 2>&1 || docker network create --driver bridge "$proxy_net"
+
+      # update proxy files and restart container
+      mkdir -p "$proxy_path"
+      if [ "$PROXY_REDEPLOY" == "true" ] || ! docker compose -f "$proxy_path/docker-compose.yml" ps feat-taylortrhodes-proxy 2>/dev/null | grep -q "Up"; then
+        echo "Updating proxy files and restarting..."
+        # Restart or start proxy
+        docker compose -f "$proxy_path/docker-compose.yml" up -d --force-recreate
+      fi
+
+      # sanity checks
+      echo checking variables
+      : "${CI_REGISTRY:?missing}"
+      : "${CI_REGISTRY_USER:?missing}"
+      : "${CI_REGISTRY_PASSWORD:?missing}"
+      : "${CONTAINER_COMMIT_IMAGE:?missing}"
+
+      # login to GitLab Container Registry (NOT Docker Hub)
+      echo logging in to gitlab docker registry
+      echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+
+      # pull first; only stop/replace on successful pull
+      echo pull image from registry
+      docker pull "$CONTAINER_COMMIT_IMAGE"
+
+      if docker ps -a --format '{{.Names}}' | grep -q "^$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com$"; then
+        echo removing existing container
+        docker rm -f "$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com"
+      fi
+
+      echo starting new container
+      docker run --rm --name $CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com --network "$proxy_net" -d "$CONTAINER_COMMIT_IMAGE"
+      EOSSH
+    - echo feature is available at https://$CI_COMMIT_SHORT_SHA.feat.taylortrhodes.com
+  timeout: 8 minutes
 
 Deploy Dev Instance:
   stage: deploy
@@ -53,13 +132,10 @@ Deploy Dev Instance:
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
       allow_failure: true
-    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\//'
-      when: on_success
     - when: never
   variables:
     SSH_PORT: "22"
     TARGET_HOST: $SSH_IP
-    SSH_USER: "taylor"
   before_script:
     - |
       set -euo pipefail
@@ -68,31 +144,30 @@ Deploy Dev Instance:
     - chmod 600 "$SSH_KEY"
     - ssh-keygen -lf "$SSH_KEY" || true
     - |
-      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_BRANCH_IMAGE=$CONTAINER_BRANCH_IMAGE bash -s" <<'EOSSH'
+      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_COMMIT_IMAGE=$CONTAINER_COMMIT_IMAGE bash -s" <<'EOSSH'
       set -euo pipefail
-  
+
       # sanity checks
       echo checking varaibles
       : "${CI_REGISTRY:?missing}"
       : "${CI_REGISTRY_USER:?missing}"
       : "${CI_REGISTRY_PASSWORD:?missing}"
-      : "${CONTAINER_BRANCH_IMAGE:?missing}"
-  
+      : "${CONTAINER_COMMIT_IMAGE:?missing}"
+
       # login to GitLab Container Registry (NOT Docker Hub)
       echo logging in to gitlab docker registry
       echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
   
       # pull first; only stop/replace on successful pull
       echo pull image from registry
-      docker pull "$CONTAINER_BRANCH_IMAGE"
-  
+      docker pull "$CONTAINER_COMMIT_IMAGE"
+
       echo stopping and removing old container
       docker stop dev.taylortrhodes.com 2>/dev/null || true
       docker rm   dev.taylortrhodes.com 2>/dev/null || true
-  
-      # NOTE: adjust right side of -p if your container listens on 80 vs 8080
+
       echo starting new container
-      docker run --name dev.taylortrhodes.com -p 8084:8080 --restart=always -d "$CONTAINER_BRANCH_IMAGE"
+      docker run --name dev.taylortrhodes.com -p 8082:8080 --restart=always -d "$CONTAINER_COMMIT_IMAGE"
       EOSSH
   timeout: 5 minutes
 
@@ -141,7 +216,7 @@ Deploy DO VM:
     - chmod 600 "$SSH_KEY"
     - ssh-keygen -lf "$SSH_KEY" || true
     - |
-      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_BRANCH_IMAGE=$CONTAINER_BRANCH_IMAGE bash -s" <<'EOSSH'
+      ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_HOST" "CI_REGISTRY=$CI_REGISTRY CI_REGISTRY_USER=$CI_REGISTRY_USER CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD CONTAINER_COMMIT_IMAGE=$CONTAINER_COMMIT_IMAGE bash -s" <<'EOSSH'
       set -euo pipefail
   
       # sanity checks
@@ -149,7 +224,7 @@ Deploy DO VM:
       : "${CI_REGISTRY:?missing}"
       : "${CI_REGISTRY_USER:?missing}"
       : "${CI_REGISTRY_PASSWORD:?missing}"
-      : "${CONTAINER_BRANCH_IMAGE:?missing}"
+      : "${CONTAINER_COMMIT_IMAGE:?missing}"
   
       # login to GitLab Container Registry (NOT Docker Hub)
       echo logging in to gitlab docker registry
@@ -157,7 +232,7 @@ Deploy DO VM:
   
       # pull first; only stop/replace on successful pull
       echo pull image from registry
-      docker pull "$CONTAINER_BRANCH_IMAGE"
+      docker pull "$CONTAINER_COMMIT_IMAGE"
   
       echo stopping and removing old container
       docker stop taylortrhodes.com 2>/dev/null || true
@@ -165,7 +240,7 @@ Deploy DO VM:
   
       # NOTE: adjust right side of -p if your container listens on 80 vs 8080
       echo starting new container
-      docker run --name taylortrhodes.com -p 8085:8080 --restart=always -d "$CONTAINER_BRANCH_IMAGE"
+      docker run --name taylortrhodes.com -p 8081:8080 --restart=always -d "$CONTAINER_COMMIT_IMAGE"
       EOSSH
   #after_script:
   #  - |
