@@ -1,0 +1,14 @@
+networks:
+  feat-taylortrhodes-proxy-net:
+    external: true
+
+services:
+  feat-taylortrhodes-proxy:
+    image: nginx:alpine3.22
+    container_name: feat-taylortrhodes-proxy
+    ports:
+      - "8083:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - feat-taylortrhodes-proxy-net
